@@ -1,0 +1,11 @@
+use aloha_backend::configuration::get_configuration;
+use aloha_backend::startup::Application;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    dbg!(&configuration);
+    let application = Application::build(configuration).await?;
+    application.run_until_stopped().await?;
+    Ok(())
+}
