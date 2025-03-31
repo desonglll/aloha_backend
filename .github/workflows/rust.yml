@@ -45,7 +45,7 @@ jobs:
       - name: Install SQLX CLI
         run: cargo install sqlx-cli
       - name: Database initialization
-        run: cd ./migrations && sqlx database create && sqlx migrate run
+        run: sqlx database create && sqlx migrate run
       - name: Check
         run: cargo check
       - name: Build
@@ -95,7 +95,7 @@ jobs:
         run: cargo install --locked cargo-nextest
 
       - name: Database initialization
-        run: cd ./migrations && sqlx database create && sqlx migrate run
+        run: sqlx database create && sqlx migrate run
 
       - name: Run tests
         run: cargo nextest run --verbose
