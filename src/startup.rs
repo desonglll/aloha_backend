@@ -1,6 +1,7 @@
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::routes::health_check::health_check;
 use actix_session::storage::RedisSessionStore;
+use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web::web::Data;
@@ -11,7 +12,6 @@ use secrecy::{ExposeSecret, SecretString};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
-use actix_session::SessionMiddleware;
 use tracing_actix_web::TracingLogger;
 
 pub struct ApplicationBaseUrl(pub String);

@@ -1,6 +1,6 @@
 pub mod configuration;
-mod mappers;
-mod models;
+pub mod mappers;
+pub mod models;
 
 mod routes;
 pub mod startup;
