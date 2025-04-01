@@ -27,7 +27,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/aloha
 - [ ] add mappers for tweet
 
 
-- [ ] add CRUD for user_group
+- [x] add CRUD for user_group
 - [ ] add CRUD for user
 - [ ] add CRUD for tweet
 
