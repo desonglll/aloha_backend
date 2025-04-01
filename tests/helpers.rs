@@ -1,4 +1,5 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
+use aloha_backend::models::user_group::UserGroup;
 use aloha_backend::startup::{get_connection_pool, Application};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
@@ -7,7 +8,6 @@ use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpStream;
 use uuid::Uuid;
-use aloha_backend::models::user_group::UserGroup;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let _default_filter_level = "info".to_string();
@@ -60,11 +60,11 @@ pub struct TestApp {
     pub api_client: reqwest::Client,
 }
 impl TestApp {
-    pub async fn post_user_group(&self, body: String) -> reqwest::Response {
+    pub async fn post_user_group(&self, body: &serde_json::Value) -> reqwest::Response {
         self.api_client
             .post(format!("{}/user_group", self.address))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(body)
+            .header("Content-Type", "application/json")
+            .json(body)
             .send()
             .await
             .expect("Failed to execute request.")
@@ -77,7 +77,26 @@ impl TestApp {
             .expect("Failed to execute request.")
             .json::<UserGroup>()
             .await
-        
+    }
+    pub async fn put_user_group(&self, body: &serde_json::Value) -> reqwest::Result<UserGroup> {
+        self.api_client
+            .put(format!("{}/user_group", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserGroup>()
+            .await
+    }
+    pub async fn delete_user_group(&self, id: Uuid) -> reqwest::Result<UserGroup> {
+        self.api_client
+            .delete(format!("{}/user_group/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserGroup>()
+            .await
     }
 }
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
