@@ -9,6 +9,12 @@ sqlx migrate run
 sqlx migrate revert
 ```
 
+## `.env`
+
+```dotenv
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/aloha
+```
+
 ## TODO
 
 - [x] add user_group model
