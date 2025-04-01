@@ -3,6 +3,14 @@ use anyhow::Context;
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
+pub async fn get_all_groups(
+    mut transaction: Transaction<'_, Postgres>,
+) -> Result<Vec<UserGroup>, sqlx::Error> {
+    sqlx::query_as!(UserGroup, "select * from user_groups")
+        .fetch_all(&mut *transaction)
+        .await
+}
+
 pub async fn get_group_by_id(
     mut transaction: Transaction<'_, Postgres>,
     id: Uuid,

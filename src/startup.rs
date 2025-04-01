@@ -15,6 +15,7 @@ use secrecy::{ExposeSecret, SecretString};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
+use tracing::info;
 use tracing_actix_web::TracingLogger;
 
 pub struct ApplicationBaseUrl(pub String);
@@ -56,9 +57,9 @@ impl Application {
     }
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         let port = self.port;
-        println!("Server starting on port {}", port);
+        info!("Server starting on port {}", port);
         let result = self.server.await;
-        println!("Server on port {} has stopped", port);
+        info!("Server on port {} has stopped", port);
         result
     }
 }
