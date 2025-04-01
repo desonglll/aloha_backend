@@ -1,5 +1,6 @@
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::routes::health_check::health_check;
+use crate::routes::user_group::{get_user_group_route, insert_user_group_route};
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
@@ -88,6 +89,8 @@ pub async fn run(
             ))
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
+            .route("/user_group", web::post().to(insert_user_group_route))
+            .route("/user_group/{id}", web::get().to(get_user_group_route))
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))

@@ -7,6 +7,7 @@ use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpStream;
 use uuid::Uuid;
+use aloha_backend::models::user_group::UserGroup;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let _default_filter_level = "info".to_string();
@@ -57,6 +58,27 @@ pub struct TestApp {
     pub port: u16,
     pub(crate) test_user: TestUser,
     pub api_client: reqwest::Client,
+}
+impl TestApp {
+    pub async fn post_user_group(&self, body: String) -> reqwest::Response {
+        self.api_client
+            .post(format!("{}/user_group", self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+    pub async fn get_user_group_by_id(&self, id: Uuid) -> reqwest::Result<UserGroup> {
+        self.api_client
+            .get(format!("{}/user_group/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserGroup>()
+            .await
+        
+    }
 }
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect_with(&config.without_db())

@@ -15,15 +15,12 @@ actix-web = { version = "4" }
 tracing-actix-web = "0.7.16"
 tracing = "0.1"
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid"] }
-tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
-dotenv = "0.15.0"
 serde = "1.0.219"
-serde_json = "1.0.140"
 chrono = { version = "0.4.40", features = ["serde"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde-aux = "4.6.0"
 wiremock = "0.6.3"
-reqwest = { version = "0.12.15", features = ["cookies"] }
+reqwest = { version = "0.12.15", features = ["cookies", "json"] }
 once_cell = "1.21.3"
 anyhow = "1.0.97"
 actix-web-flash-messages = { version = "0.5.0", features = ["cookies", "sessions"] }
@@ -31,5 +28,4 @@ actix-session = { version = "0.10.1", features = ["redis-session"] }
 config = "0.15.11"
 uuid = { version = "1.16.0", features = ["v4", "serde"] }
 tokio = { version = "1.44.1", features = ["rt-multi-thread"] }
-rand = { version = "0.9.0", features = ["std_rng"] }
 argon2 = { version = "0.5.3", features = ["std"] }
