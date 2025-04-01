@@ -7,6 +7,7 @@ use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpStream;
+use tracing::info;
 use uuid::Uuid;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -151,7 +152,7 @@ pub async fn spawn_app() -> TestApp {
         test_user: TestUser::generate(),
     };
     test_app.test_user.store(&test_app.db_pool).await;
-    println!(
+    info!(
         "Is port {} open? {}",
         test_app.port,
         is_port_open(test_app.port)
