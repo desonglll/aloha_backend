@@ -4,6 +4,7 @@ use crate::routes::user_group::{
     delete_user_group_route, get_all_user_groups_route, get_user_group_route,
     insert_user_group_route, update_user_group_route,
 };
+use actix_cors::Cors;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
@@ -16,7 +17,6 @@ use secrecy::{ExposeSecret, SecretString};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
-use actix_cors::Cors;
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 
@@ -93,7 +93,13 @@ pub async fn run(
                 secret_key.clone(),
             ))
             .wrap(TracingLogger::default())
-            .wrap(Cors::default().allow_any_origin()) 
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_header()
+                    .allow_any_method()
+                    .allowed_origin("http://localhost:5173"),
+            )
             .route("/health_check", web::get().to(health_check))
             .route("/user_group", web::post().to(insert_user_group_route))
             .route("/user_group/{id}", web::get().to(get_user_group_route))
