@@ -15,9 +15,31 @@ async fn insert_user_group_returns_a_200_for_valid_form_data() {
         .mount(&mock_server)
         .await;
 
-    let response = app.post_user_group(&body).await;
+    let response = app.post_user_group(&body).await.unwrap();
 
-    assert_eq!(200, response.status().as_u16());
+    assert_eq!(response.group_name, "Default Group");
+}
+
+#[tokio::test]
+async fn get_all_user_group_returns_a_200() {
+    let app = spawn_app().await;
+    let mut transaction = app.db_pool.begin().await.unwrap();
+    let user_groups = UserGroup::default_vec_test(Some(3));
+    for user_group in &user_groups {
+        insert_user_group(transaction, user_group)
+            .await
+            .unwrap();
+        transaction = app.db_pool.begin().await.unwrap();
+    }
+
+    let mock_server = MockServer::start().await;
+    Mock::given(path("/user_groups"))
+        .and(method("GET"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&mock_server)
+        .await;
+    let response = app.get_all_user_groups().await.unwrap();
+    assert!(response.len() > 0);
 }
 
 #[tokio::test]

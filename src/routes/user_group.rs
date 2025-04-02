@@ -1,6 +1,4 @@
-use crate::mappers::user_group::{
-    delete_user_group_by_id, get_group_by_id, insert_user_group, update_user_group,
-};
+use crate::mappers::user_group::{delete_user_group_by_id, get_all_groups, get_group_by_id, insert_user_group, update_user_group};
 use crate::models::user_group::UserGroup;
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
@@ -22,6 +20,12 @@ pub async fn insert_user_group_route(
     let user_group = UserGroup::new(group_name.clone());
     let result = insert_user_group(transaction, &user_group).await.unwrap();
     Ok(HttpResponse::Ok().json(result))
+}
+
+pub async fn get_all_user_groups_route(pool: Data<PgPool>) -> Result<HttpResponse, actix_web::Error> {
+    let transaction = pool.begin().await.unwrap();
+    let user_groups = get_all_groups(transaction).await.unwrap();
+    Ok(HttpResponse::Ok().json(user_groups))
 }
 
 pub async fn get_user_group_route(
