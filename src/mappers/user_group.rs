@@ -30,7 +30,7 @@ pub async fn get_all_groups(
     let pagination = Pagination::new(
         Option::from(dto_query.page()),
         Option::from(dto_query.size()),
-        Option::from(total),
+        total,
     );
     Ok(DtoResponse::new(data, Option::from(pagination)))
 }

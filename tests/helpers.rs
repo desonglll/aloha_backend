@@ -1,6 +1,7 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
 use aloha_backend::dto::query::DtoQuery;
 use aloha_backend::dto::response::DtoResponse;
+use aloha_backend::models::user::UserResponse;
 use aloha_backend::models::user_group::UserGroup;
 use aloha_backend::startup::{get_connection_pool, Application};
 use argon2::password_hash::rand_core::OsRng;
@@ -111,6 +112,64 @@ impl TestApp {
             .json::<UserGroup>()
             .await
     }
+
+    pub async fn post_user(&self, body: &serde_json::Value) -> reqwest::Result<UserResponse> {
+        self.api_client
+            .post(format!("{}/user", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserResponse>()
+            .await
+    }
+
+    pub async fn get_all_users(&self) -> reqwest::Result<DtoResponse<Vec<UserResponse>>> {
+        self.api_client
+            .get(format!("{}/users", self.address))
+            .query(&DtoQuery::default_query())
+            .send()
+            .await?
+            .json::<DtoResponse<Vec<UserResponse>>>()
+            .await
+    }
+
+    pub async fn get_user_by_id(&self, id: Uuid) -> reqwest::Result<UserResponse> {
+        self.api_client
+            .get(format!("{}/user/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserResponse>()
+            .await
+    }
+
+    pub async fn put_user(
+        &self,
+        id: Uuid,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<UserResponse> {
+        self.api_client
+            .put(format!("{}/user/{}", self.address, id))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserResponse>()
+            .await
+    }
+
+    pub async fn delete_user(&self, id: Uuid) -> reqwest::Result<UserResponse> {
+        self.api_client
+            .delete(format!("{}/user/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserResponse>()
+            .await
+    }
 }
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect_with(&config.without_db())
@@ -172,13 +231,14 @@ pub async fn spawn_app() -> TestApp {
     test_app
 }
 
+fn is_port_open(port: u16) -> bool {
+    TcpStream::connect(format!("127.0.0.1:{}", port)).is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
     }
-}
-fn is_port_open(port: u16) -> bool {
-    TcpStream::connect(format!("127.0.0.1:{}", port)).is_ok()
 }

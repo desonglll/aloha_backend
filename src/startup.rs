@@ -1,5 +1,8 @@
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::routes::health_check::health_check;
+use crate::routes::user::{
+    delete_user_route, get_all_users_route, get_user_route, insert_user_route, update_user_route,
+};
 use crate::routes::user_group::{
     delete_user_group_route, get_all_user_groups_route, get_user_group_route,
     insert_user_group_route, update_user_group_route,
@@ -115,6 +118,14 @@ pub async fn run(
                 "/user_group/{id}",
                 web::delete().to(delete_user_group_route),
             )
+            .route("/user", web::post().to(insert_user_route))
+            .route("/user/{id}", web::get().to(get_user_route))
+            .route("/user/{id}", web::put().to(update_user_route))
+            .route(
+                format!("/{}", routes.users).as_str(),
+                web::get().to(get_all_users_route),
+            )
+            .route("/user/{id}", web::delete().to(delete_user_route))
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))

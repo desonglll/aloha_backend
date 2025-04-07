@@ -15,6 +15,32 @@ pub(crate) struct FormData {
     group_name: String,
 }
 
+/// Create a new user group
+///
+/// # API Documentation
+///
+/// ## POST /api/user-groups
+///
+/// Creates a new user group with the specified name.
+///
+/// ### Request Body
+/// ```json
+/// {
+///     "group_name": "string"
+/// }
+/// ```
+///
+/// ### Response
+/// - 200 OK: Returns the created user group
+/// ```json
+/// {
+///     "id": "uuid",
+///     "group_name": "string",
+///     "created_at": "datetime",
+///     "updated_at": "datetime"
+/// }
+/// ```
+/// - 500 Internal Server Error: Database error
 pub async fn insert_user_group_route(
     body: Json<FormData>,
     pool: Data<PgPool>,
@@ -28,6 +54,33 @@ pub async fn insert_user_group_route(
     }
 }
 
+/// Get all user groups with pagination
+///
+/// # API Documentation
+///
+/// ## GET /api/user-groups
+///
+/// Retrieves all user groups with optional pagination and filtering.
+///
+/// ### Query Parameters
+/// - page: Page number (optional)
+/// - size: Items per page (optional)
+/// - sort: Sort field (optional)
+/// - order: Sort order (asc/desc) (optional)
+///
+/// ### Response
+/// - 200 OK: Returns list of user groups
+/// ```json
+/// [
+///     {
+///         "id": "uuid",
+///         "group_name": "string",
+///         "created_at": "datetime",
+///         "updated_at": "datetime"
+///     }
+/// ]
+/// ```
+/// - 500 Internal Server Error: Database error
 pub async fn get_all_user_groups_route(
     query: web::Query<DtoQuery>,
     pool: Data<PgPool>,
@@ -39,6 +92,28 @@ pub async fn get_all_user_groups_route(
     }
 }
 
+/// Get a specific user group by ID
+///
+/// # API Documentation
+///
+/// ## GET /api/user-groups/{id}
+///
+/// Retrieves a specific user group by its ID.
+///
+/// ### Path Parameters
+/// - id: UUID of the user group
+///
+/// ### Response
+/// - 200 OK: Returns the user group
+/// ```json
+/// {
+///     "id": "uuid",
+///     "group_name": "string",
+///     "created_at": "datetime",
+///     "updated_at": "datetime"
+/// }
+/// ```
+/// - 500 Internal Server Error: Database error
 pub async fn get_user_group_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -51,6 +126,35 @@ pub async fn get_user_group_route(
     }
 }
 
+/// Update an existing user group
+///
+/// # API Documentation
+///
+/// ## PUT /api/user-groups
+///
+/// Updates an existing user group.
+///
+/// ### Request Body
+/// ```json
+/// {
+///     "id": "uuid",
+///     "group_name": "string",
+///     "created_at": "datetime",
+///     "updated_at": "datetime"
+/// }
+/// ```
+///
+/// ### Response
+/// - 200 OK: Returns the updated user group
+/// ```json
+/// {
+///     "id": "uuid",
+///     "group_name": "string",
+///     "created_at": "datetime",
+///     "updated_at": "datetime"
+/// }
+/// ```
+/// - 500 Internal Server Error: Database error
 pub async fn update_user_group_route(
     body: Json<UserGroup>,
     pool: Data<PgPool>,
@@ -62,6 +166,28 @@ pub async fn update_user_group_route(
     }
 }
 
+/// Delete a user group by ID
+///
+/// # API Documentation
+///
+/// ## DELETE /api/user-groups/{id}
+///
+/// Deletes a specific user group by its ID.
+///
+/// ### Path Parameters
+/// - id: UUID of the user group to delete
+///
+/// ### Response
+/// - 200 OK: Returns the deleted user group
+/// ```json
+/// {
+///     "id": "uuid",
+///     "group_name": "string",
+///     "created_at": "datetime",
+///     "updated_at": "datetime"
+/// }
+/// ```
+/// - 500 Internal Server Error: Database error
 pub async fn delete_user_group_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,

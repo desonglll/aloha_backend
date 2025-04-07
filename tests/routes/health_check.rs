@@ -9,7 +9,7 @@ async fn health_check() {
         .build()
         .expect("Failed to build reqwest");
     let response = client
-        .get(&format!("{}/health_check", &app.address))
+        .get(format!("{}/health_check", &app.address))
         .send()
         .await
         .expect("Failed to send request");
