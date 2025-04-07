@@ -52,6 +52,8 @@ jobs:
         run: cargo build --bin server --release
       - name: Check status of release binaries
         run: stat ./target/release/server
+      - name: Show filesize
+        run: du -h ./target/release/server
 
   test:
     runs-on: ubuntu-latest
