@@ -1,7 +1,6 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
 use aloha_backend::dto::query::DtoQuery;
 use aloha_backend::dto::response::DtoResponse;
-use aloha_backend::models::tweet::TweetResponse;
 use aloha_backend::models::user::UserResponse;
 use aloha_backend::models::user_group::UserGroup;
 use aloha_backend::startup::{get_connection_pool, Application};
@@ -169,77 +168,6 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
             .json::<UserResponse>()
-            .await
-    }
-
-    pub async fn post_tweet(&self, body: &serde_json::Value) -> reqwest::Result<TweetResponse> {
-        self.api_client
-            .post(format!("{}/tweet", self.address))
-            .header("Content-Type", "application/json")
-            .json(body)
-            .send()
-            .await
-            .expect("Failed to execute request.")
-            .json::<TweetResponse>()
-            .await
-    }
-
-    pub async fn get_all_tweets(&self) -> reqwest::Result<DtoResponse<Vec<TweetResponse>>> {
-        self.api_client
-            .get(format!("{}/tweets", self.address))
-            .query(&DtoQuery::default_query())
-            .send()
-            .await?
-            .json::<DtoResponse<Vec<TweetResponse>>>()
-            .await
-    }
-
-    pub async fn get_tweet_by_id(&self, id: i32) -> reqwest::Result<TweetResponse> {
-        self.api_client
-            .get(format!("{}/tweet/{}", self.address, id))
-            .send()
-            .await
-            .expect("Failed to execute request.")
-            .json::<TweetResponse>()
-            .await
-    }
-
-    pub async fn get_tweets_by_user_id(
-        &self,
-        user_id: Uuid,
-    ) -> reqwest::Result<DtoResponse<Vec<TweetResponse>>> {
-        self.api_client
-            .get(format!("{}/user/{}/tweets", self.address, user_id))
-            .query(&DtoQuery::default_query())
-            .send()
-            .await?
-            .json::<DtoResponse<Vec<TweetResponse>>>()
-            .await
-    }
-
-    pub async fn put_tweet(
-        &self,
-        id: i32,
-        body: &serde_json::Value,
-    ) -> reqwest::Result<TweetResponse> {
-        self.api_client
-            .put(format!("{}/tweet/{}", self.address, id))
-            .header("Content-Type", "application/json")
-            .json(body)
-            .send()
-            .await
-            .expect("Failed to execute request.")
-            .json::<TweetResponse>()
-            .await
-    }
-
-    pub async fn delete_tweet(&self, id: i32) -> reqwest::Result<TweetResponse> {
-        self.api_client
-            .delete(format!("{}/tweet/{}", self.address, id))
-            .send()
-            .await
-            .expect("Failed to execute request.")
-            .json::<TweetResponse>()
             .await
     }
 }
