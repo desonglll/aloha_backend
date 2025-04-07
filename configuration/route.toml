@@ -1,2 +1,9 @@
 [routes]
+health_check = "health_check"
 user_groups = "user_groups"
+user_group = "user_group"
+users = "users"
+user = "user"
+tweets = "tweets"
+tweet = "tweet"
+user_tweets = "user/{user_id}/tweets"

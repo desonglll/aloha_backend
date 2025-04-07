@@ -37,7 +37,7 @@ async fn get_all_user_group_returns_a_200() {
         .mount(&mock_server)
         .await;
     let response = app.get_all_user_groups().await.unwrap();
-    assert!(response.data.len() > 0);
+    assert!(!response.data.is_empty());
 }
 
 #[tokio::test]

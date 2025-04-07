@@ -1,5 +1,9 @@
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::routes::health_check::health_check;
+use crate::routes::init_routes;
+use crate::routes::user::{
+    delete_user_route, get_all_users_route, get_user_route, insert_user_route, update_user_route,
+};
 use crate::routes::user_group::{
     delete_user_group_route, get_all_user_groups_route, get_user_group_route,
     insert_user_group_route, update_user_group_route,
@@ -89,7 +93,7 @@ pub async fn run(
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let message_framework = FlashMessagesFramework::builder(message_store).build();
     let server = HttpServer::new(move || {
-        App::new()
+        let mut app = App::new()
             .wrap(message_framework.clone())
             .wrap(SessionMiddleware::new(
                 redis_store.clone(),
@@ -102,20 +106,15 @@ pub async fn run(
                     .allow_any_header()
                     .allow_any_method()
                     .allowed_origin("http://localhost:5173"),
-            )
-            .route("/health_check", web::get().to(health_check))
-            .route("/user_group", web::post().to(insert_user_group_route))
-            .route("/user_group/{id}", web::get().to(get_user_group_route))
-            .route("/user_group", web::put().to(update_user_group_route))
-            .route(
-                format!("/{}", routes.user_groups).as_str(),
-                web::get().to(get_all_user_groups_route),
-            )
-            .route(
-                "/user_group/{id}",
-                web::delete().to(delete_user_group_route),
-            )
-            .app_data(db_pool.clone())
+            );
+
+        let mut cfg = web::ServiceConfig::new();
+        init_routes(&mut cfg);
+        app = app.configure(|config| {
+            config.service(cfg);
+        });
+
+        app.app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))
     })
