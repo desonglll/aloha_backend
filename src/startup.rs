@@ -4,6 +4,7 @@ use crate::routes::user_group::{
     delete_user_group_route, get_all_user_groups_route, get_user_group_route,
     insert_user_group_route, update_user_group_route,
 };
+use crate::routes::Routes;
 use actix_cors::Cors;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
@@ -45,6 +46,7 @@ impl Application {
             configuration.application.base_url,
             configuration.application.hmac_secret,
             configuration.redis_uri,
+            configuration.routes,
         )
         .await?;
         Ok(Self { port, server })
@@ -78,6 +80,7 @@ pub async fn run(
     base_url: String,
     hmac_secret: SecretString,
     redis_uri: SecretString,
+    routes: Routes,
 ) -> Result<Server, anyhow::Error> {
     let db_pool = web::Data::new(db_pool);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
@@ -104,7 +107,10 @@ pub async fn run(
             .route("/user_group", web::post().to(insert_user_group_route))
             .route("/user_group/{id}", web::get().to(get_user_group_route))
             .route("/user_group", web::put().to(update_user_group_route))
-            .route("/user_groups", web::get().to(get_all_user_groups_route))
+            .route(
+                format!("/{}", routes.user_groups).as_str(),
+                web::get().to(get_all_user_groups_route),
+            )
             .route(
                 "/user_group/{id}",
                 web::delete().to(delete_user_group_route),

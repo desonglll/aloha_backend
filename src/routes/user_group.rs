@@ -1,3 +1,4 @@
+use crate::dto::query::DtoQuery;
 use crate::error::AlohaError;
 use crate::mappers::user_group::{
     delete_user_group_by_id, get_all_groups, get_group_by_id, insert_user_group, update_user_group,
@@ -27,9 +28,12 @@ pub async fn insert_user_group_route(
     }
 }
 
-pub async fn get_all_user_groups_route(pool: Data<PgPool>) -> Result<HttpResponse, AlohaError> {
+pub async fn get_all_user_groups_route(
+    query: web::Query<DtoQuery>,
+    pool: Data<PgPool>,
+) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    match get_all_groups(transaction).await {
+    match get_all_groups(transaction, query.0).await {
         Ok(user_groups) => Ok(HttpResponse::Ok().json(user_groups)),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
