@@ -1,4 +1,6 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
+use aloha_backend::dto::query::DtoQuery;
+use aloha_backend::dto::response::DtoResponse;
 use aloha_backend::models::user_group::UserGroup;
 use aloha_backend::startup::{get_connection_pool, Application};
 use argon2::password_hash::rand_core::OsRng;
@@ -71,12 +73,13 @@ impl TestApp {
             .json::<UserGroup>()
             .await
     }
-    pub async fn get_all_user_groups(&self) -> reqwest::Result<Vec<UserGroup>> {
+    pub async fn get_all_user_groups(&self) -> reqwest::Result<DtoResponse<Vec<UserGroup>>> {
         self.api_client
             .get(format!("{}/user_groups", self.address))
+            .query(&DtoQuery::default_query())
             .send()
             .await?
-            .json::<Vec<UserGroup>>()
+            .json::<DtoResponse<Vec<UserGroup>>>()
             .await
     }
     pub async fn get_user_group_by_id(&self, id: Uuid) -> reqwest::Result<UserGroup> {

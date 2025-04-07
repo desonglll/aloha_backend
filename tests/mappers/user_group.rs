@@ -1,4 +1,5 @@
 use crate::helpers::spawn_app;
+use aloha_backend::dto::query::DtoQuery;
 use aloha_backend::mappers::user_group::{
     delete_user_group_by_id, get_all_groups, get_group_by_id, insert_user_group, update_user_group,
 };
@@ -27,8 +28,9 @@ async fn test_get_all_user_groups_success() {
         .await
         .unwrap();
     }
-    let result = get_all_groups(transaction).await.unwrap();
-    assert_eq!(result.len(), user_groups.len());
+    let dto_query = DtoQuery::default_query();
+    let result = get_all_groups(transaction, dto_query).await.unwrap();
+    assert_eq!(result.data.len(), user_groups.len());
 }
 #[tokio::test]
 async fn test_get_user_group_by_id_success() {

@@ -26,9 +26,7 @@ async fn get_all_user_group_returns_a_200() {
     let mut transaction = app.db_pool.begin().await.unwrap();
     let user_groups = UserGroup::default_vec_test(Some(3));
     for user_group in &user_groups {
-        insert_user_group(transaction, user_group)
-            .await
-            .unwrap();
+        insert_user_group(transaction, user_group).await.unwrap();
         transaction = app.db_pool.begin().await.unwrap();
     }
 
@@ -39,7 +37,7 @@ async fn get_all_user_group_returns_a_200() {
         .mount(&mock_server)
         .await;
     let response = app.get_all_user_groups().await.unwrap();
-    assert!(response.len() > 0);
+    assert!(response.data.len() > 0);
 }
 
 #[tokio::test]

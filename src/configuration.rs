@@ -1,12 +1,15 @@
+use crate::routes::Routes;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use sqlx::ConnectOptions;
+
 #[derive(Deserialize, Clone, Debug)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub routes: Routes,
     pub redis_uri: SecretString,
 }
 #[derive(Deserialize, Debug, Clone)]
@@ -88,6 +91,9 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         ))
         .add_source(config::File::from(
             configuration_directory.join(&environment_filename),
+        ))
+        .add_source(config::File::from(
+            configuration_directory.join("route.toml"),
         ))
         .add_source(
             config::Environment::with_prefix("ALOHA")
