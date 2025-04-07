@@ -39,7 +39,6 @@ impl TestUser {
         .hash_password(self.password.as_bytes(), &salt)
         .unwrap()
         .to_string();
-        dbg!(&password_hash);
         sqlx::query!(
             "INSERT INTO users (id, username, password_hash)
             VALUES ($1, $2, $3)",
@@ -61,7 +60,7 @@ pub struct TestApp {
     pub api_client: reqwest::Client,
 }
 impl TestApp {
-    pub async fn post_user_group(&self, body: &serde_json::Value) -> reqwest::Response {
+    pub async fn post_user_group(&self, body: &serde_json::Value) -> reqwest::Result<UserGroup> {
         self.api_client
             .post(format!("{}/user_group", self.address))
             .header("Content-Type", "application/json")
@@ -69,6 +68,16 @@ impl TestApp {
             .send()
             .await
             .expect("Failed to execute request.")
+            .json::<UserGroup>()
+            .await
+    }
+    pub async fn get_all_user_groups(&self) -> reqwest::Result<Vec<UserGroup>> {
+        self.api_client
+            .get(format!("{}/user_groups", self.address))
+            .send()
+            .await?
+            .json::<Vec<UserGroup>>()
+            .await
     }
     pub async fn get_user_group_by_id(&self, id: Uuid) -> reqwest::Result<UserGroup> {
         self.api_client
@@ -133,7 +142,6 @@ pub async fn spawn_app() -> TestApp {
         .expect("Failed to build application");
     let application_port = application.port();
     let address = format!("http://127.0.0.1:{}", application_port);
-    dbg!(&address);
 
     #[allow(clippy::let_underscore_future)]
     let _ = tokio::spawn(application.run_until_stopped());

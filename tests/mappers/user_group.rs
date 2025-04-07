@@ -88,7 +88,7 @@ async fn test_delete_user_group_success() {
     let result = delete_user_group_by_id(transaction, user_group.id)
         .await
         .unwrap();
-    assert_eq!(result, user_group)
+    assert_eq!(result, user_group);
 }
 #[tokio::test]
 async fn test_update_user_group_success() {
