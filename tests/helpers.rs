@@ -144,6 +144,17 @@ impl TestApp {
             .json::<UserResponse>()
             .await
     }
+    pub async fn delete_users(&self, ids: &[Uuid]) -> reqwest::Result<Vec<UserResponse>> {
+        self.api_client
+            .delete(format!("{}/user", self.address))
+            .header("Content-Type", "application/json")
+            .json(ids)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Vec<UserResponse>>()
+            .await
+    }
 
     pub async fn put_user(
         &self,

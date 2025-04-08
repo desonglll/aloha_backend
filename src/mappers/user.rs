@@ -196,3 +196,38 @@ pub async fn update_user(
         user_group_id: row.user_group_id,
     })
 }
+
+pub async fn delete_users_by_ids(
+    mut transaction: Transaction<'_, Postgres>,
+    ids: Vec<Uuid>,
+) -> Result<Vec<User>, anyhow::Error> {
+    let rows = sqlx::query!(
+        r#"
+        DELETE FROM users 
+        WHERE id = ANY($1) 
+        RETURNING id, username, password_hash, created_at, user_group_id
+        "#,
+        &ids
+    )
+    .fetch_all(&mut *transaction)
+    .await
+    .context("Failed to delete users")?;
+
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit SQL transaction to delete users.")?;
+
+    let users = rows
+        .into_iter()
+        .map(|row| User {
+            id: row.id,
+            username: row.username,
+            password_hash: row.password_hash,
+            created_at: row.created_at.map(|dt| dt.to_string()),
+            user_group_id: row.user_group_id,
+        })
+        .collect();
+
+    Ok(users)
+}

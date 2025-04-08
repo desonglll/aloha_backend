@@ -2,7 +2,7 @@ use crate::dto::query::DtoQuery;
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user::{
-    delete_user_by_id, get_all_users, get_user_by_id, insert_user, update_user,
+    delete_user_by_id, delete_users_by_ids, get_all_users, get_user_by_id, insert_user, update_user,
 };
 use crate::models::user::{User, UserResponse};
 use actix_web::web::{Data, Json};
@@ -207,6 +207,50 @@ pub async fn update_user_route(
 
     match update_user(transaction, &updated_user).await {
         Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
+        Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+    }
+}
+/// Delete multiple users by their IDs
+///
+/// # API Documentation
+///
+/// ## DELETE /api/users
+///
+/// Deletes multiple users by their IDs.
+///
+/// ### Request Body
+/// ```json
+/// {
+///     "ids": ["uuid", "uuid", ...]
+/// }
+/// ```
+///
+/// ### Response
+/// - 200 OK: Returns the list of deleted users
+/// ```json
+/// [
+///     {
+///         "id": "uuid",
+///         "username": "string",
+///         "created_at": "datetime",
+///         "user_group_id": "uuid" (optional)
+///     },
+///     ...
+/// ]
+/// ```
+/// - 500 Internal Server Error: Database error
+pub async fn delete_users_route(
+    body: Json<Vec<Uuid>>,
+    pool: Data<PgPool>,
+) -> Result<HttpResponse, AlohaError> {
+    let transaction = pool.begin().await.unwrap();
+    match delete_users_by_ids(transaction, body.into_inner()).await {
+        Ok(result) => Ok(HttpResponse::Ok().json(
+            result
+                .into_iter()
+                .map(UserResponse::from)
+                .collect::<Vec<_>>(),
+        )),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
