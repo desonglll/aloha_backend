@@ -1,4 +1,6 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
+use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::group_permission::{
     delete_group_permission, delete_group_permissions_by_group_id,
@@ -7,13 +9,14 @@ use crate::mappers::group_permission::{
     insert_group_permission,
 };
 use crate::models::group_permission::GroupPermission;
-use actix_web::web::{Data, Json, Path, Query};
+use actix_web::web::{self, Data, Json, Path, Query};
 use actix_web::HttpResponse;
 use serde::Deserialize;
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub struct FormData {
     pub group_id: Uuid,
     pub permission_id: Uuid,
@@ -345,4 +348,29 @@ pub async fn delete_group_permissions_by_permission_id_route(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn group_permissions_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.group_permissions).as_str())
+            .route("", web::post().to(insert_group_permission_route))
+            .route("", web::get().to(get_all_group_permissions_route))
+            .route(
+                "/group/{group_id}",
+                web::get().to(get_group_permissions_by_group_id_route),
+            )
+            .route(
+                "/permission/{permission_id}",
+                web::get().to(get_group_permissions_by_permission_id_route),
+            )
+            .route("", web::delete().to(delete_group_permission_route))
+            .route(
+                "/group/{group_id}",
+                web::delete().to(delete_group_permissions_by_group_id_route),
+            )
+            .route(
+                "/permission/{permission_id}",
+                web::delete().to(delete_group_permissions_by_permission_id_route),
+            ),
+    );
 }

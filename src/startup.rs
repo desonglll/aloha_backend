@@ -1,24 +1,10 @@
+use crate::api_doc::ApiDoc;
 use crate::configuration::{DatabaseSettings, Settings};
-use crate::routes::group_permission::{
-    delete_group_permission_route, delete_group_permissions_by_group_id_route,
-    delete_group_permissions_by_permission_id_route, get_all_group_permissions_route,
-    get_group_permissions_by_group_id_route, get_group_permissions_by_permission_id_route,
-    insert_group_permission_route,
-};
+use crate::routes::api_routes;
+use utoipa::OpenApi;
+
 use crate::routes::health_check::health_check;
-use crate::routes::permission::{
-    delete_permission_route, get_all_permissions_route, get_permission_route,
-    insert_permission_route, update_permission_route,
-};
-use crate::routes::user::{
-    delete_user_route, delete_users_route, get_all_users_route, get_user_route, insert_user_route,
-    update_user_route,
-};
-use crate::routes::user_group::{
-    delete_user_group_route, get_all_user_groups_route, get_user_group_route,
-    insert_user_group_route, update_user_group_route,
-};
-use crate::routes::Routes;
+
 use actix_cors::Cors;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
@@ -34,6 +20,7 @@ use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing::info;
 use tracing_actix_web::TracingLogger;
+use utoipa_swagger_ui::SwaggerUi;
 
 pub struct ApplicationBaseUrl(pub String);
 #[derive(Clone)]
@@ -42,6 +29,7 @@ pub struct HmacSecret(pub SecretString);
 pub struct Application {
     port: u16,
     server: Server,
+    endpoint: String,
 }
 
 impl Application {
@@ -50,7 +38,7 @@ impl Application {
 
         let address = format!(
             "{}:{}",
-            configuration.application.host, configuration.application.port
+            configuration.application.host, configuration.application.port,
         );
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr()?.port();
@@ -60,19 +48,27 @@ impl Application {
             configuration.application.base_url,
             configuration.application.hmac_secret,
             configuration.redis_uri,
-            configuration.routes,
         )
         .await?;
-        Ok(Self { port, server })
+        Ok(Self {
+            port,
+            server,
+            endpoint: configuration.application.endpoint,
+        })
     }
 
     pub fn port(&self) -> u16 {
         self.port
     }
 
+    pub fn endpoint(&self) -> String {
+        self.endpoint.clone()
+    }
+
     pub fn server(&self) -> &Server {
         &self.server
     }
+
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         let port = self.port;
         info!("Server starting on port {}", port);
@@ -94,7 +90,6 @@ pub async fn run(
     base_url: String,
     hmac_secret: SecretString,
     redis_uri: SecretString,
-    routes: Routes,
 ) -> Result<Server, anyhow::Error> {
     let db_pool = web::Data::new(db_pool);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
@@ -117,66 +112,12 @@ pub async fn run(
                     .allow_any_method()
                     .allowed_origin("http://localhost:5173"),
             )
-            .route("/health_check", web::get().to(health_check))
-            .route("/user_group", web::post().to(insert_user_group_route))
-            .route("/user_group/{id}", web::get().to(get_user_group_route))
-            .route("/user_group", web::put().to(update_user_group_route))
-            .route(
-                format!("/{}", routes.user_groups).as_str(),
-                web::get().to(get_all_user_groups_route),
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}")
+                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
-            .route(
-                "/user_group/{id}",
-                web::delete().to(delete_user_group_route),
-            )
-            .route("/user", web::post().to(insert_user_route))
-            .route("/user/{id}", web::get().to(get_user_route))
-            .route("/user/{id}", web::put().to(update_user_route))
-            .route(
-                format!("/{}", routes.users).as_str(),
-                web::get().to(get_all_users_route),
-            )
-            .route("/user/{id}", web::delete().to(delete_user_route))
-            .route("/user", web::delete().to(delete_users_route))
-            .route("/permission", web::post().to(insert_permission_route))
-            .route("/permission/{id}", web::get().to(get_permission_route))
-            .route("/permission", web::put().to(update_permission_route))
-            .route(
-                format!("/{}", routes.permissions).as_str(),
-                web::get().to(get_all_permissions_route),
-            )
-            .route(
-                "/permission/{id}",
-                web::delete().to(delete_permission_route),
-            )
-            .route(
-                "/group-permissions",
-                web::post().to(insert_group_permission_route),
-            )
-            .route(
-                format!("/{}", routes.group_permissions).as_str(),
-                web::get().to(get_all_group_permissions_route),
-            )
-            .route(
-                "/group-permissions/group/{group_id}",
-                web::get().to(get_group_permissions_by_group_id_route),
-            )
-            .route(
-                "/group-permissions/permission/{permission_id}",
-                web::get().to(get_group_permissions_by_permission_id_route),
-            )
-            .route(
-                "/group-permissions",
-                web::delete().to(delete_group_permission_route),
-            )
-            .route(
-                "/group-permissions/group/{group_id}",
-                web::delete().to(delete_group_permissions_by_group_id_route),
-            )
-            .route(
-                "/group-permissions/permission/{permission_id}",
-                web::delete().to(delete_group_permissions_by_permission_id_route),
-            )
+            .route("/api/health_check", web::get().to(health_check))
+            .configure(api_routes)
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))

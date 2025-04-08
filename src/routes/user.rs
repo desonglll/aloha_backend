@@ -1,3 +1,4 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
@@ -287,4 +288,16 @@ pub async fn delete_user_route(
         Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn user_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.users).as_str())
+            .route("", web::post().to(insert_user_route))
+            .route("/{id}", web::get().to(get_user_route))
+            .route("/{id}", web::put().to(update_user_route))
+            .route("", web::get().to(get_all_users_route))
+            .route("/{id}", web::delete().to(delete_user_route))
+            .route("", web::delete().to(delete_users_route)),
+    );
 }

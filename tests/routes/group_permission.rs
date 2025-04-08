@@ -26,7 +26,7 @@ async fn insert_group_permission_returns_a_200_for_valid_form_data() {
     });
 
     let mock_server = MockServer::start().await;
-    Mock::given(path("/group-permissions"))
+    Mock::given(path("/group_permissions"))
         .and(method("POST"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&mock_server)
@@ -89,7 +89,7 @@ async fn get_group_permissions_by_group_id_returns_a_200() {
 
     let mock_server = MockServer::start().await;
     Mock::given(path(
-        format!("/group-permissions/group/{}", user_group.id).as_str(),
+        format!("/group_permissions/group/{}", user_group.id).as_str(),
     ))
     .and(method("GET"))
     .respond_with(ResponseTemplate::new(200))
@@ -125,7 +125,7 @@ async fn get_group_permissions_by_permission_id_returns_a_200() {
 
     let mock_server = MockServer::start().await;
     Mock::given(path(
-        format!("/group-permissions/permission/{}", permission.id).as_str(),
+        format!("/group_permissions/permission/{}", permission.id).as_str(),
     ))
     .and(method("GET"))
     .respond_with(ResponseTemplate::new(200))
@@ -165,7 +165,7 @@ async fn delete_group_permission_returns_a_200() {
     });
 
     let mock_server = MockServer::start().await;
-    Mock::given(path("/group-permissions"))
+    Mock::given(path("/group_permissions"))
         .and(method("DELETE"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&mock_server)
@@ -197,7 +197,7 @@ async fn delete_group_permissions_by_group_id_returns_a_200() {
 
     let mock_server = MockServer::start().await;
     Mock::given(path(
-        format!("/group-permissions/group/{}", user_group.id).as_str(),
+        format!("/group_permissions/group/{}", user_group.id).as_str(),
     ))
     .and(method("DELETE"))
     .respond_with(ResponseTemplate::new(200))
@@ -233,7 +233,7 @@ async fn delete_group_permissions_by_permission_id_returns_a_200() {
 
     let mock_server = MockServer::start().await;
     Mock::given(path(
-        format!("/group-permissions/permission/{}", permission.id).as_str(),
+        format!("/group_permissions/permission/{}", permission.id).as_str(),
     ))
     .and(method("DELETE"))
     .respond_with(ResponseTemplate::new(200))

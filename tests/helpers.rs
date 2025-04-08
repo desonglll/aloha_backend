@@ -67,7 +67,7 @@ pub struct TestApp {
 impl TestApp {
     pub async fn post_user_group(&self, body: &serde_json::Value) -> reqwest::Result<UserGroup> {
         self.api_client
-            .post(format!("{}/user_group", self.address))
+            .post(format!("{}/user_groups", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -87,7 +87,7 @@ impl TestApp {
     }
     pub async fn get_user_group_by_id(&self, id: Uuid) -> reqwest::Result<UserGroup> {
         self.api_client
-            .get(format!("{}/user_group/{}", self.address, id))
+            .get(format!("{}/user_groups/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -95,8 +95,9 @@ impl TestApp {
             .await
     }
     pub async fn put_user_group(&self, body: &serde_json::Value) -> reqwest::Result<UserGroup> {
+        tracing::info!(self.address);
         self.api_client
-            .put(format!("{}/user_group", self.address))
+            .put(format!("{}/user_groups", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -107,7 +108,7 @@ impl TestApp {
     }
     pub async fn delete_user_group(&self, id: Uuid) -> reqwest::Result<UserGroup> {
         self.api_client
-            .delete(format!("{}/user_group/{}", self.address, id))
+            .delete(format!("{}/user_groups/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -117,7 +118,7 @@ impl TestApp {
 
     pub async fn post_user(&self, body: &serde_json::Value) -> reqwest::Result<UserResponse> {
         self.api_client
-            .post(format!("{}/user", self.address))
+            .post(format!("{}/users", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -139,7 +140,7 @@ impl TestApp {
 
     pub async fn get_user_by_id(&self, id: Uuid) -> reqwest::Result<UserResponse> {
         self.api_client
-            .get(format!("{}/user/{}", self.address, id))
+            .get(format!("{}/users/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -148,7 +149,7 @@ impl TestApp {
     }
     pub async fn delete_users(&self, ids: &[Uuid]) -> reqwest::Result<Vec<UserResponse>> {
         self.api_client
-            .delete(format!("{}/user", self.address))
+            .delete(format!("{}/users", self.address))
             .header("Content-Type", "application/json")
             .json(ids)
             .send()
@@ -164,7 +165,7 @@ impl TestApp {
         body: &serde_json::Value,
     ) -> reqwest::Result<UserResponse> {
         self.api_client
-            .put(format!("{}/user/{}", self.address, id))
+            .put(format!("{}/users/{}", self.address, id))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -176,7 +177,7 @@ impl TestApp {
 
     pub async fn delete_user(&self, id: Uuid) -> reqwest::Result<UserResponse> {
         self.api_client
-            .delete(format!("{}/user/{}", self.address, id))
+            .delete(format!("{}/users/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -186,7 +187,7 @@ impl TestApp {
 
     pub async fn post_permission(&self, body: &serde_json::Value) -> reqwest::Result<Permission> {
         self.api_client
-            .post(format!("{}/permission", self.address))
+            .post(format!("{}/permissions", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -208,7 +209,7 @@ impl TestApp {
 
     pub async fn get_permission_by_id(&self, id: Uuid) -> reqwest::Result<Permission> {
         self.api_client
-            .get(format!("{}/permission/{}", self.address, id))
+            .get(format!("{}/permissions/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -218,7 +219,7 @@ impl TestApp {
 
     pub async fn put_permission(&self, body: &serde_json::Value) -> reqwest::Result<Permission> {
         self.api_client
-            .put(format!("{}/permission", self.address))
+            .put(format!("{}/permissions", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -230,7 +231,7 @@ impl TestApp {
 
     pub async fn delete_permission(&self, id: Uuid) -> reqwest::Result<Permission> {
         self.api_client
-            .delete(format!("{}/permission/{}", self.address, id))
+            .delete(format!("{}/permissions/{}", self.address, id))
             .send()
             .await
             .expect("Failed to execute request.")
@@ -243,7 +244,7 @@ impl TestApp {
         body: &serde_json::Value,
     ) -> reqwest::Result<GroupPermission> {
         self.api_client
-            .post(format!("{}/group-permissions", self.address))
+            .post(format!("{}/group_permissions", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -271,7 +272,7 @@ impl TestApp {
     ) -> reqwest::Result<Vec<GroupPermission>> {
         self.api_client
             .get(format!(
-                "{}/group-permissions/group/{}",
+                "{}/group_permissions/group/{}",
                 self.address, group_id
             ))
             .send()
@@ -287,7 +288,7 @@ impl TestApp {
     ) -> reqwest::Result<Vec<GroupPermission>> {
         self.api_client
             .get(format!(
-                "{}/group-permissions/permission/{}",
+                "{}/group_permissions/permission/{}",
                 self.address, permission_id
             ))
             .send()
@@ -302,7 +303,7 @@ impl TestApp {
         body: &serde_json::Value,
     ) -> reqwest::Result<GroupPermission> {
         self.api_client
-            .delete(format!("{}/group-permissions", self.address))
+            .delete(format!("{}/group_permissions", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -318,7 +319,7 @@ impl TestApp {
     ) -> reqwest::Result<Vec<GroupPermission>> {
         self.api_client
             .delete(format!(
-                "{}/group-permissions/group/{}",
+                "{}/group_permissions/group/{}",
                 self.address, group_id
             ))
             .send()
@@ -334,7 +335,7 @@ impl TestApp {
     ) -> reqwest::Result<Vec<GroupPermission>> {
         self.api_client
             .delete(format!(
-                "{}/group-permissions/permission/{}",
+                "{}/group_permissions/permission/{}",
                 self.address, permission_id
             ))
             .send()
@@ -376,7 +377,8 @@ pub async fn spawn_app() -> TestApp {
         .await
         .expect("Failed to build application");
     let application_port = application.port();
-    let address = format!("http://127.0.0.1:{}", application_port);
+    let endpoint = application.endpoint();
+    let address = format!("http://127.0.0.1:{}/{}", application_port, endpoint);
 
     #[allow(clippy::let_underscore_future)]
     let _ = tokio::spawn(application.run_until_stopped());

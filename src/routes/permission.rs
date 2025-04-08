@@ -1,3 +1,4 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
 use crate::error::AlohaError;
 use crate::mappers::permission::{
@@ -204,4 +205,15 @@ pub async fn delete_permission_route(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn permission_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.permissions).as_str())
+            .route("", web::post().to(insert_permission_route))
+            .route("/{id}", web::get().to(get_permission_route))
+            .route("", web::put().to(update_permission_route))
+            .route("", web::get().to(get_all_permissions_route))
+            .route("/{id}", web::delete().to(delete_permission_route)),
+    );
 }

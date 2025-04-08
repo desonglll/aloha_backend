@@ -2,10 +2,11 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, utoipa::ToSchema)]
 pub struct GroupPermission {
     pub group_id: Uuid,
     pub permission_id: Uuid,
+    #[serde(skip)]
     pub created_at: Option<OffsetDateTime>,
 }
 

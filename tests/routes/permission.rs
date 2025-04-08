@@ -12,7 +12,7 @@ async fn insert_permission_returns_a_200_for_valid_form_data() {
         "description": "Default permission description"
     });
     let mock_server = MockServer::start().await;
-    Mock::given(path("/permission"))
+    Mock::given(path("/permissions"))
         .and(method("POST"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&mock_server)
