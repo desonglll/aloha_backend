@@ -44,3 +44,4 @@ tracing-subscriber = { version = "0.3.19", features = [
     "env-filter",
 ] }
 actix-cors = "0.7.1"
+time = { version = "0.3.41", features = ["serde"] }

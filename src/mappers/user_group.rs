@@ -51,7 +51,7 @@ pub async fn insert_user_group(
 ) -> Result<UserGroup, anyhow::Error> {
     match sqlx::query_as!(
         UserGroup,
-        "insert into user_groups (id, group_name) values ($1, $2) returning id, group_name",
+        "insert into user_groups (id, group_name) values ($1, $2) returning id, group_name, created_at",
         group.id,
         group.group_name
     )
@@ -76,7 +76,7 @@ pub async fn delete_user_group_by_id(
 ) -> Result<UserGroup, anyhow::Error> {
     match sqlx::query_as!(
         UserGroup,
-        "delete from user_groups where id=$1 returning id, group_name",
+        "delete from user_groups where id=$1 returning id, group_name, created_at",
         id
     )
     .fetch_one(&mut *transaction)
@@ -103,7 +103,7 @@ pub async fn update_user_group(
 ) -> Result<UserGroup, anyhow::Error> {
     match sqlx::query_as!(
         UserGroup,
-        "update user_groups set group_name = $1 where id = $2 returning id, group_name",
+        "update user_groups set group_name = $1 where id = $2 returning id, group_name, created_at",
         group.group_name,
         group.id
     )
