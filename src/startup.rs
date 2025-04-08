@@ -109,8 +109,7 @@ pub async fn run(
                 Cors::default()
                     .allow_any_origin()
                     .allow_any_header()
-                    .allow_any_method()
-                    .allowed_origin("http://localhost:5173"),
+                    .allow_any_method(),
             )
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")
