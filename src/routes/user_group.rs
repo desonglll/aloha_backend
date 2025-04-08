@@ -1,3 +1,4 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
 use crate::error::AlohaError;
 use crate::mappers::user_group::{
@@ -197,4 +198,15 @@ pub async fn delete_user_group_route(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn user_group_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.user_groups).as_str())
+            .route("", web::post().to(insert_user_group_route))
+            .route("/{id}", web::get().to(get_user_group_route))
+            .route("", web::put().to(update_user_group_route))
+            .route("", web::get().to(get_all_user_groups_route))
+            .route("/{id}", web::delete().to(delete_user_group_route)),
+    );
 }

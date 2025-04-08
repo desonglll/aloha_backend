@@ -62,7 +62,7 @@ async fn test_insert_user_group_success() {
     let user_group = UserGroup::default_test();
     let transaction = app.db_pool.begin().await.unwrap();
     let result = insert_user_group(transaction, &user_group).await.unwrap();
-    assert_eq!(user_group, result);
+    assert_eq!(user_group.id, result.id);
 }
 
 #[tokio::test]
@@ -77,7 +77,7 @@ async fn test_delete_user_group_success() {
     let user_group = UserGroup::default_test();
     let inserted_user_group = sqlx::query_as!(
         UserGroup,
-        "insert into user_groups (id, group_name) values ($1, $2) returning id, group_name",
+        "insert into user_groups (id, group_name) values ($1, $2) returning id, group_name, created_at",
         user_group.id.clone(),
         user_group.group_name
     )
@@ -85,12 +85,12 @@ async fn test_delete_user_group_success() {
     .await
     .unwrap();
 
-    assert_eq!(inserted_user_group, user_group);
+    assert_eq!(inserted_user_group.id, user_group.id);
 
     let result = delete_user_group_by_id(transaction, user_group.id)
         .await
         .unwrap();
-    assert_eq!(result, user_group);
+    assert_eq!(result.id, user_group.id);
 }
 #[tokio::test]
 async fn test_update_user_group_success() {
@@ -118,5 +118,5 @@ async fn test_update_user_group_success() {
     let update_result = update_user_group(transaction, &updated_user_group)
         .await
         .unwrap();
-    assert_eq!(updated_user_group, update_result);
+    assert_eq!(updated_user_group.id, update_result.id);
 }

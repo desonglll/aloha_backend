@@ -4,3 +4,4 @@ require_ssl = false
 [application]
 base_url = "http://127.0.0.1"
 port = 8080
+endpoint = "api"

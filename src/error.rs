@@ -4,7 +4,7 @@ use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, utoipa::ToSchema)]
 pub enum AlohaError {
     DatabaseError(String),
 }

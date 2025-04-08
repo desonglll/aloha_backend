@@ -121,6 +121,44 @@ async fn update_user_returns_a_200_for_valid_form_data() {
     assert_eq!(response.username, "updated_username");
 }
 
+// Test for deleting multiple users
+#[tokio::test]
+async fn delete_users_returns_a_200_for_valid_ids() {
+    let app = spawn_app().await;
+
+    // First create a user group
+    let mut transaction = app.db_pool.begin().await.unwrap();
+    let user_group = UserGroup::default_test();
+    let user_group_result = insert_user_group(transaction, &user_group).await.unwrap();
+
+    // Create first user
+    transaction = app.db_pool.begin().await.unwrap();
+    let mut user1 = User::default_test();
+    user1.user_group_id = Some(user_group_result.id);
+    let user1_result = insert_user(transaction, &user1).await.unwrap();
+
+    // Create second user
+    transaction = app.db_pool.begin().await.unwrap();
+    let mut user2 = User::default_test();
+    user2.username = "test_user2".to_string();
+    user2.user_group_id = Some(user_group_result.id);
+    let user2_result = insert_user(transaction, &user2).await.unwrap();
+
+    let user_ids = vec![user1_result.id, user2_result.id];
+
+    let mock_server = MockServer::start().await;
+    Mock::given(path("/user"))
+        .and(method("DELETE"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&mock_server)
+        .await;
+
+    let response = app.delete_users(&user_ids).await.unwrap();
+    assert_eq!(response.len(), 2);
+    assert!(response.iter().any(|u| u.id == user1_result.id));
+    assert!(response.iter().any(|u| u.id == user2_result.id));
+}
+
 #[tokio::test]
 async fn delete_user_returns_a_200_for_valid_id() {
     let app = spawn_app().await;
