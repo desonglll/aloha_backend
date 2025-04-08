@@ -1,5 +1,6 @@
 use actix_web::web;
 use group_permission::group_permissions_routes;
+use health_check::health_check;
 use permission::permission_routes;
 use serde::Deserialize;
 use user::user_routes;
@@ -24,6 +25,7 @@ pub fn api_routes(cfg: &mut web::ServiceConfig) {
             .configure(permission_routes)
             .configure(group_permissions_routes)
             .configure(user_group_routes)
-            .configure(user_routes),
+            .configure(user_routes)
+            .route("/health", web::get().to(health_check)),
     );
 }

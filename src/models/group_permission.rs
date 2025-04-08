@@ -7,6 +7,7 @@ pub struct GroupPermission {
     pub group_id: Uuid,
     pub permission_id: Uuid,
     #[serde(skip)]
+    #[schema(value_type = String)]
     pub created_at: Option<OffsetDateTime>,
 }
 

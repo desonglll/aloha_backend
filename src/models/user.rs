@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
@@ -12,7 +13,7 @@ pub struct User {
     pub user_group_id: Option<Uuid>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,

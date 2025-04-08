@@ -1,5 +1,6 @@
 use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
+use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::permission::{
     delete_permission_by_id, get_all_permissions, get_permission_by_id, insert_permission,
@@ -10,9 +11,10 @@ use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub(crate) struct FormData {
     name: String,
     description: Option<String>,
@@ -45,6 +47,15 @@ pub(crate) struct FormData {
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    post,
+    path = "/permissions",
+    request_body = FormData,
+    responses(
+        (status = 200, description = "Permission created successfully", body = Permission),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn insert_permission_route(
     body: Json<FormData>,
     pool: Data<PgPool>,
@@ -86,6 +97,20 @@ pub async fn insert_permission_route(
 /// ]
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/permissions",
+    params(
+        ("page" = Option<i32>, Query, description = "Page number"),
+        ("size" = Option<i32>, Query, description = "Page size"),
+        ("sort" = Option<String>, Query, description = "Sort field"),
+        ("order" = Option<String>, Query, description = "Sort order (asc/desc)")
+    ),
+    responses(
+        (status = 200, description = "Permissions retrieved successfully", body = DtoResponse<Vec<Permission>>),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_all_permissions_route(
     query: web::Query<DtoQuery>,
     pool: Data<PgPool>,
@@ -119,6 +144,17 @@ pub async fn get_all_permissions_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/permissions/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Permission ID")
+    ),
+    responses(
+        (status = 200, description = "Permission retrieved successfully", body = Permission),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_permission_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -163,6 +199,15 @@ pub async fn get_permission_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    put,
+    path = "/permissions",
+    request_body = Permission,
+    responses(
+        (status = 200, description = "Permission updated successfully", body = Permission),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn update_permission_route(
     body: Json<Permission>,
     pool: Data<PgPool>,
@@ -196,6 +241,17 @@ pub async fn update_permission_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    delete,
+    path = "/permissions/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Permission ID")
+    ),
+    responses(
+        (status = 200, description = "Permission deleted successfully", body = Permission),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn delete_permission_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,

@@ -26,7 +26,7 @@ pub struct FormData {
 ///
 /// # API Documentation
 ///
-/// ## POST /api/group-permissions
+/// ## POST /api/group_permissions
 ///
 /// Creates a new group permission mapping.
 ///
@@ -50,7 +50,7 @@ pub struct FormData {
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     post,
-    path = "/group-permissions",
+    path = "/api/group_permissions",
     request_body = FormData,
     responses(
         (status = 200, description = "Group permission created successfully", body = GroupPermission),
@@ -73,7 +73,7 @@ pub async fn insert_group_permission_route(
 ///
 /// # API Documentation
 ///
-/// ## GET /api/group-permissions
+/// ## GET /api/group_permissions
 ///
 /// Retrieves all group permissions with optional pagination.
 ///
@@ -103,7 +103,7 @@ pub async fn insert_group_permission_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
-    path = "/group-permissions",
+    path = "/api/group_permissions",
     params(
         ("page" = Option<i32>, Query, description = "Page number"),
         ("size" = Option<i32>, Query, description = "Page size")
@@ -128,7 +128,7 @@ pub async fn get_all_group_permissions_route(
 ///
 /// # API Documentation
 ///
-/// ## GET /api/group-permissions/group/{group_id}
+/// ## GET /api/group_permissions/group/{group_id}
 ///
 /// Retrieves all permissions for a specific group.
 ///
@@ -149,7 +149,7 @@ pub async fn get_all_group_permissions_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
-    path = "/group-permissions/group/{group_id}",
+    path = "/api/group_permissions/group/{group_id}",
     params(
         ("group_id" = Uuid, Path, description = "Group ID")
     ),
@@ -173,7 +173,7 @@ pub async fn get_group_permissions_by_group_id_route(
 ///
 /// # API Documentation
 ///
-/// ## GET /api/group-permissions/permission/{permission_id}
+/// ## GET /api/group_permissions/permission/{permission_id}
 ///
 /// Retrieves all groups that have a specific permission.
 ///
@@ -194,7 +194,7 @@ pub async fn get_group_permissions_by_group_id_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
-    path = "/group-permissions/permission/{permission_id}",
+    path = "/api/group_permissions/permission/{permission_id}",
     params(
         ("permission_id" = Uuid, Path, description = "Permission ID")
     ),
@@ -218,7 +218,7 @@ pub async fn get_group_permissions_by_permission_id_route(
 ///
 /// # API Documentation
 ///
-/// ## DELETE /api/group-permissions
+/// ## DELETE /api/group_permissions
 ///
 /// Deletes a specific group permission mapping.
 ///
@@ -242,7 +242,7 @@ pub async fn get_group_permissions_by_permission_id_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     delete,
-    path = "/group-permissions",
+    path = "/api/group_permissions",
     request_body = FormData,
     responses(
         (status = 200, description = "Group permission deleted successfully", body = GroupPermission),
@@ -264,7 +264,7 @@ pub async fn delete_group_permission_route(
 ///
 /// # API Documentation
 ///
-/// ## DELETE /api/group-permissions/group/{group_id}
+/// ## DELETE /api/group_permissions/group/{group_id}
 ///
 /// Deletes all permission mappings for a specific group.
 ///
@@ -285,7 +285,7 @@ pub async fn delete_group_permission_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     delete,
-    path = "/group-permissions/group/{group_id}",
+    path = "/api/group_permissions/group/{group_id}",
     params(
         ("group_id" = Uuid, Path, description = "Group ID")
     ),
@@ -309,7 +309,7 @@ pub async fn delete_group_permissions_by_group_id_route(
 ///
 /// # API Documentation
 ///
-/// ## DELETE /api/group-permissions/permission/{permission_id}
+/// ## DELETE /api/group_permissions/permission/{permission_id}
 ///
 /// Deletes all group mappings for a specific permission.
 ///
@@ -330,7 +330,7 @@ pub async fn delete_group_permissions_by_group_id_route(
 /// - 400 Bad Request: Database error
 #[utoipa::path(
     delete,
-    path = "/group-permissions/permission/{permission_id}",
+    path = "/api/group_permissions/permission/{permission_id}",
     params(
         ("permission_id" = Uuid, Path, description = "Permission ID")
     ),

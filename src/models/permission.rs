@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
 pub struct Permission {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
+    #[schema(value_type = String)]
     pub created_at: Option<OffsetDateTime>,
 }
 
