@@ -1,4 +1,6 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
+use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user_group::{
     delete_user_group_by_id, get_all_groups, get_group_by_id, insert_user_group, update_user_group,
@@ -8,9 +10,10 @@ use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub(crate) struct FormData {
     group_name: String,
 }
@@ -19,7 +22,7 @@ pub(crate) struct FormData {
 ///
 /// # API Documentation
 ///
-/// ## POST /api/user-groups
+/// ## POST /api/user_groups
 ///
 /// Creates a new user group with the specified name.
 ///
@@ -41,6 +44,15 @@ pub(crate) struct FormData {
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    post,
+    path = "/api/user_groups",
+    request_body = FormData,
+    responses(
+        (status = 200, description = "User group created successfully", body = UserGroup),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn insert_user_group_route(
     body: Json<FormData>,
     pool: Data<PgPool>,
@@ -58,7 +70,7 @@ pub async fn insert_user_group_route(
 ///
 /// # API Documentation
 ///
-/// ## GET /api/user-groups
+/// ## GET /api/user_groups
 ///
 /// Retrieves all user groups with optional pagination and filtering.
 ///
@@ -81,6 +93,20 @@ pub async fn insert_user_group_route(
 /// ]
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/api/user_groups",
+    params(
+        ("page" = Option<i32>, Query, description = "Page number"),
+        ("size" = Option<i32>, Query, description = "Page size"),
+        ("sort" = Option<String>, Query, description = "Sort field"),
+        ("order" = Option<String>, Query, description = "Sort order (asc/desc)")
+    ),
+    responses(
+        (status = 200, description = "User groups retrieved successfully", body = DtoResponse<Vec<UserGroup>>),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_all_user_groups_route(
     query: web::Query<DtoQuery>,
     pool: Data<PgPool>,
@@ -96,7 +122,7 @@ pub async fn get_all_user_groups_route(
 ///
 /// # API Documentation
 ///
-/// ## GET /api/user-groups/{id}
+/// ## GET /api/user_groups/{id}
 ///
 /// Retrieves a specific user group by its ID.
 ///
@@ -114,6 +140,17 @@ pub async fn get_all_user_groups_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/api/user_groups/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User group ID")
+    ),
+    responses(
+        (status = 200, description = "User group retrieved successfully", body = UserGroup),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_user_group_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -130,7 +167,7 @@ pub async fn get_user_group_route(
 ///
 /// # API Documentation
 ///
-/// ## PUT /api/user-groups
+/// ## PUT /api/user_groups
 ///
 /// Updates an existing user group.
 ///
@@ -155,6 +192,15 @@ pub async fn get_user_group_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    put,
+    path = "/api/user_groups",
+    request_body = UserGroup,
+    responses(
+        (status = 200, description = "User group updated successfully", body = UserGroup),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn update_user_group_route(
     body: Json<UserGroup>,
     pool: Data<PgPool>,
@@ -170,7 +216,7 @@ pub async fn update_user_group_route(
 ///
 /// # API Documentation
 ///
-/// ## DELETE /api/user-groups/{id}
+/// ## DELETE /api/user_groups/{id}
 ///
 /// Deletes a specific user group by its ID.
 ///
@@ -188,6 +234,17 @@ pub async fn update_user_group_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    delete,
+    path = "/api/user_groups/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User group ID")
+    ),
+    responses(
+        (status = 200, description = "User group deleted successfully", body = UserGroup),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn delete_user_group_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -197,4 +254,15 @@ pub async fn delete_user_group_route(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn user_group_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.user_groups).as_str())
+            .route("", web::post().to(insert_user_group_route))
+            .route("/{id}", web::get().to(get_user_group_route))
+            .route("", web::put().to(update_user_group_route))
+            .route("", web::get().to(get_all_user_groups_route))
+            .route("/{id}", web::delete().to(delete_user_group_route)),
+    );
 }

@@ -29,6 +29,7 @@ pub struct ApplicationSettings {
     pub host: String,
     pub base_url: String,
     pub hmac_secret: SecretString,
+    pub endpoint: String,
 }
 pub enum Environment {
     Local,
@@ -121,11 +122,13 @@ mod tests {
         let host = String::from("127.0.0.1");
         let base_url = String::from("http://127.0.0.1");
         let hmac_secret = SecretString::from("hello");
+        let endpoint = String::from("/api");
         let application_settings: ApplicationSettings = ApplicationSettings {
             port,
             host: host.clone(),
             base_url: base_url.clone(),
             hmac_secret,
+            endpoint,
         };
 
         assert_eq!(application_settings.port, port);

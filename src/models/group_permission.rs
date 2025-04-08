@@ -1,21 +1,21 @@
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
-pub struct UserGroup {
-    pub id: Uuid,
-    pub group_name: String,
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, utoipa::ToSchema)]
+pub struct GroupPermission {
+    pub group_id: Uuid,
+    pub permission_id: Uuid,
+    #[serde(skip)]
     #[schema(value_type = String)]
     pub created_at: Option<OffsetDateTime>,
 }
 
-impl UserGroup {
+impl GroupPermission {
     pub fn default_test() -> Self {
         Self {
-            id: Uuid::new_v4(),
-            group_name: String::from("Default Group"),
+            group_id: Uuid::new_v4(),
+            permission_id: Uuid::new_v4(),
             created_at: Some(OffsetDateTime::now_utc()),
         }
     }
@@ -25,19 +25,19 @@ impl UserGroup {
         let mut result = Vec::<Self>::new();
         (0..number).for_each(|_| {
             let new = Self {
-                id: Uuid::new_v4(),
-                group_name: String::from(Uuid::new_v4()),
+                group_id: Uuid::new_v4(),
+                permission_id: Uuid::new_v4(),
                 created_at: Some(OffsetDateTime::now_utc()),
             };
             result.push(new);
         });
         result
     }
-    pub fn new(group_name: String) -> Self {
-        let id = Uuid::new_v4();
+
+    pub fn new(group_id: Uuid, permission_id: Uuid) -> Self {
         Self {
-            id,
-            group_name,
+            group_id,
+            permission_id,
             created_at: Some(OffsetDateTime::now_utc()),
         }
     }

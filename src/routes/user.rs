@@ -1,17 +1,19 @@
+use crate::configuration::get_configuration;
 use crate::dto::query::DtoQuery;
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user::{
-    delete_user_by_id, get_all_users, get_user_by_id, insert_user, update_user,
+    delete_user_by_id, delete_users_by_ids, get_all_users, get_user_by_id, insert_user, update_user,
 };
 use crate::models::user::{User, UserResponse};
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub(crate) struct CreateUserFormData {
     username: String,
     password: String,
@@ -46,6 +48,15 @@ pub(crate) struct CreateUserFormData {
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    post,
+    path = "/api/users",
+    request_body = CreateUserFormData,
+    responses(
+        (status = 200, description = "User created successfully", body = UserResponse),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn insert_user_route(
     body: Json<CreateUserFormData>,
     pool: Data<PgPool>,
@@ -87,6 +98,20 @@ pub async fn insert_user_route(
 /// ]
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/api/users",
+    params(
+        ("page" = Option<i32>, Query, description = "Page number"),
+        ("size" = Option<i32>, Query, description = "Page size"),
+        ("sort" = Option<String>, Query, description = "Sort field"),
+        ("order" = Option<String>, Query, description = "Sort order (asc/desc)")
+    ),
+    responses(
+        (status = 200, description = "Users retrieved successfully", body = DtoResponse<Vec<UserResponse>>),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_all_users_route(
     query: web::Query<DtoQuery>,
     pool: Data<PgPool>,
@@ -124,6 +149,17 @@ pub async fn get_all_users_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    get,
+    path = "/api/users/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User retrieved successfully", body = UserResponse),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn get_user_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -136,7 +172,7 @@ pub async fn get_user_route(
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub(crate) struct UpdateUserFormData {
     username: String,
     password: Option<String>,
@@ -174,6 +210,18 @@ pub(crate) struct UpdateUserFormData {
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    put,
+    path = "/api/users/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User ID")
+    ),
+    request_body = UpdateUserFormData,
+    responses(
+        (status = 200, description = "User updated successfully", body = UserResponse),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn update_user_route(
     id: web::Path<(Uuid,)>,
     body: Json<UpdateUserFormData>,
@@ -210,17 +258,65 @@ pub async fn update_user_route(
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
+/// Delete multiple users by their IDs
+///
+/// # API Documentation
+///
+/// ## DELETE /api/users
+///
+/// Deletes multiple users by their IDs.
+///
+/// ### Request Body
+/// ```json
+/// [
+///     "uuid",
+///     "uuid"
+/// ]
+/// ```
+///
+/// ### Response
+/// - 200 OK: Returns the number of deleted users
+/// ```json
+/// {
+///     "count": 2
+/// }
+/// ```
+/// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    delete,
+    path = "/api/users",
+    request_body = Vec<Uuid>,
+    responses(
+        (status = 200, description = "Users deleted successfully", body = i64),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
+pub async fn delete_users_route(
+    body: Json<Vec<Uuid>>,
+    pool: Data<PgPool>,
+) -> Result<HttpResponse, AlohaError> {
+    let transaction = pool.begin().await.unwrap();
+    match delete_users_by_ids(transaction, body.into_inner()).await {
+        Ok(result) => Ok(HttpResponse::Ok().json(
+            result
+                .into_iter()
+                .map(UserResponse::from)
+                .collect::<Vec<_>>(),
+        )),
+        Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+    }
+}
 
-/// Delete a user by ID
+/// Delete a specific user by ID
 ///
 /// # API Documentation
 ///
 /// ## DELETE /api/users/{id}
 ///
-/// Deletes a user by their ID.
+/// Deletes a specific user by their ID.
 ///
 /// ### Path Parameters
-/// - id: UUID of the user to delete
+/// - id: UUID of the user
 ///
 /// ### Response
 /// - 200 OK: Returns the deleted user
@@ -233,6 +329,17 @@ pub async fn update_user_route(
 /// }
 /// ```
 /// - 500 Internal Server Error: Database error
+#[utoipa::path(
+    delete,
+    path = "/api/users/{id}",
+    params(
+        ("id" = Uuid, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "User deleted successfully", body = UserResponse),
+        (status = 500, description = "Database error", body = AlohaError)
+    )
+)]
 pub async fn delete_user_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
@@ -243,4 +350,16 @@ pub async fn delete_user_route(
         Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
+}
+pub fn user_routes(cfg: &mut web::ServiceConfig) {
+    let config = get_configuration().unwrap();
+    cfg.service(
+        web::scope(format!("/{}", config.routes.users).as_str())
+            .route("", web::post().to(insert_user_route))
+            .route("/{id}", web::get().to(get_user_route))
+            .route("/{id}", web::put().to(update_user_route))
+            .route("", web::get().to(get_all_users_route))
+            .route("/{id}", web::delete().to(delete_user_route))
+            .route("", web::delete().to(delete_users_route)),
+    );
 }
