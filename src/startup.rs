@@ -1,5 +1,15 @@
 use crate::configuration::{DatabaseSettings, Settings};
+use crate::routes::group_permission::{
+    delete_group_permission_route, delete_group_permissions_by_group_id_route,
+    delete_group_permissions_by_permission_id_route, get_all_group_permissions_route,
+    get_group_permissions_by_group_id_route, get_group_permissions_by_permission_id_route,
+    insert_group_permission_route,
+};
 use crate::routes::health_check::health_check;
+use crate::routes::permission::{
+    delete_permission_route, get_all_permissions_route, get_permission_route,
+    insert_permission_route, update_permission_route,
+};
 use crate::routes::user::{
     delete_user_route, delete_users_route, get_all_users_route, get_user_route, insert_user_route,
     update_user_route,
@@ -128,6 +138,45 @@ pub async fn run(
             )
             .route("/user/{id}", web::delete().to(delete_user_route))
             .route("/user", web::delete().to(delete_users_route))
+            .route("/permission", web::post().to(insert_permission_route))
+            .route("/permission/{id}", web::get().to(get_permission_route))
+            .route("/permission", web::put().to(update_permission_route))
+            .route(
+                format!("/{}", routes.permissions).as_str(),
+                web::get().to(get_all_permissions_route),
+            )
+            .route(
+                "/permission/{id}",
+                web::delete().to(delete_permission_route),
+            )
+            .route(
+                "/group-permissions",
+                web::post().to(insert_group_permission_route),
+            )
+            .route(
+                format!("/{}", routes.group_permissions).as_str(),
+                web::get().to(get_all_group_permissions_route),
+            )
+            .route(
+                "/group-permissions/group/{group_id}",
+                web::get().to(get_group_permissions_by_group_id_route),
+            )
+            .route(
+                "/group-permissions/permission/{permission_id}",
+                web::get().to(get_group_permissions_by_permission_id_route),
+            )
+            .route(
+                "/group-permissions",
+                web::delete().to(delete_group_permission_route),
+            )
+            .route(
+                "/group-permissions/group/{group_id}",
+                web::delete().to(delete_group_permissions_by_group_id_route),
+            )
+            .route(
+                "/group-permissions/permission/{permission_id}",
+                web::delete().to(delete_group_permissions_by_permission_id_route),
+            )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))

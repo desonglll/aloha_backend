@@ -1,6 +1,8 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
 use aloha_backend::dto::query::DtoQuery;
 use aloha_backend::dto::response::DtoResponse;
+use aloha_backend::models::group_permission::GroupPermission;
+use aloha_backend::models::permission::Permission;
 use aloha_backend::models::user::UserResponse;
 use aloha_backend::models::user_group::UserGroup;
 use aloha_backend::startup::{get_connection_pool, Application};
@@ -179,6 +181,166 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
             .json::<UserResponse>()
+            .await
+    }
+
+    pub async fn post_permission(&self, body: &serde_json::Value) -> reqwest::Result<Permission> {
+        self.api_client
+            .post(format!("{}/permission", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Permission>()
+            .await
+    }
+
+    pub async fn get_all_permissions(&self) -> reqwest::Result<DtoResponse<Vec<Permission>>> {
+        self.api_client
+            .get(format!("{}/permissions", self.address))
+            .query(&DtoQuery::default_query())
+            .send()
+            .await?
+            .json::<DtoResponse<Vec<Permission>>>()
+            .await
+    }
+
+    pub async fn get_permission_by_id(&self, id: Uuid) -> reqwest::Result<Permission> {
+        self.api_client
+            .get(format!("{}/permission/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Permission>()
+            .await
+    }
+
+    pub async fn put_permission(&self, body: &serde_json::Value) -> reqwest::Result<Permission> {
+        self.api_client
+            .put(format!("{}/permission", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Permission>()
+            .await
+    }
+
+    pub async fn delete_permission(&self, id: Uuid) -> reqwest::Result<Permission> {
+        self.api_client
+            .delete(format!("{}/permission/{}", self.address, id))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Permission>()
+            .await
+    }
+
+    pub async fn post_group_permission(
+        &self,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<GroupPermission> {
+        self.api_client
+            .post(format!("{}/group-permissions", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<GroupPermission>()
+            .await
+    }
+
+    pub async fn get_all_group_permissions(
+        &self,
+    ) -> reqwest::Result<DtoResponse<Vec<GroupPermission>>> {
+        self.api_client
+            .get(format!("{}/group_permissions", self.address))
+            .query(&DtoQuery::default_query())
+            .send()
+            .await?
+            .json::<DtoResponse<Vec<GroupPermission>>>()
+            .await
+    }
+
+    pub async fn get_group_permissions_by_group_id(
+        &self,
+        group_id: Uuid,
+    ) -> reqwest::Result<Vec<GroupPermission>> {
+        self.api_client
+            .get(format!(
+                "{}/group-permissions/group/{}",
+                self.address, group_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Vec<GroupPermission>>()
+            .await
+    }
+
+    pub async fn get_group_permissions_by_permission_id(
+        &self,
+        permission_id: Uuid,
+    ) -> reqwest::Result<Vec<GroupPermission>> {
+        self.api_client
+            .get(format!(
+                "{}/group-permissions/permission/{}",
+                self.address, permission_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Vec<GroupPermission>>()
+            .await
+    }
+
+    pub async fn delete_group_permission(
+        &self,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<GroupPermission> {
+        self.api_client
+            .delete(format!("{}/group-permissions", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<GroupPermission>()
+            .await
+    }
+
+    pub async fn delete_group_permissions_by_group_id(
+        &self,
+        group_id: Uuid,
+    ) -> reqwest::Result<Vec<GroupPermission>> {
+        self.api_client
+            .delete(format!(
+                "{}/group-permissions/group/{}",
+                self.address, group_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Vec<GroupPermission>>()
+            .await
+    }
+
+    pub async fn delete_group_permissions_by_permission_id(
+        &self,
+        permission_id: Uuid,
+    ) -> reqwest::Result<Vec<GroupPermission>> {
+        self.api_client
+            .delete(format!(
+                "{}/group-permissions/permission/{}",
+                self.address, permission_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<Vec<GroupPermission>>()
             .await
     }
 }

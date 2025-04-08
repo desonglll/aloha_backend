@@ -1,3 +1,5 @@
 [routes]
 user_groups = "user_groups"
 users = "users"
+permissions = "permissions"
+group_permissions = "group_permissions"
