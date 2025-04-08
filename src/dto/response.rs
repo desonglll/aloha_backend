@@ -1,7 +1,7 @@
 use crate::dto::pagination::Pagination;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DtoResponse<T> {
     pub pagination: Option<Pagination>,
     pub data: T,

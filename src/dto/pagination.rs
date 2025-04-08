@@ -1,7 +1,7 @@
 use crate::configuration::get_configuration;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, utoipa::ToSchema)]
 pub struct Pagination {
     pub page: Option<usize>,
     pub size: Option<usize>,
