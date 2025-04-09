@@ -6,105 +6,47 @@ use crate::mappers::permission::{
     delete_permission_by_id, get_all_permissions, get_permission_by_id, insert_permission,
     update_permission,
 };
-use crate::models::permission::Permission;
+use crate::models::permission::{Permission, PermissionResponse};
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize, Clone, ToSchema)]
-pub(crate) struct FormData {
-    name: String,
-    description: Option<String>,
+pub struct CreatePermissionFormData {
+    pub name: String,
+    pub description: Option<String>,
 }
 
-/// Create a new permission
-///
-/// # API Documentation
-///
-/// ## POST /api/permissions
-///
-/// Creates a new permission with the specified name and optional description.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "name": "string",
-///     "description": "string" (optional)
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the created permission
-/// ```json
-/// {
-///     "id": "uuid",
-///     "name": "string",
-///     "description": "string" (optional),
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     post,
-    path = "/permissions",
-    request_body = FormData,
+    path = "/api/permissions",
+    request_body = CreatePermissionFormData,
     responses(
         (status = 200, description = "Permission created successfully", body = Permission),
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn insert_permission_route(
-    body: Json<FormData>,
+    body: Json<CreatePermissionFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
-    let name = body.name.clone();
-    let description = body.description.clone();
     let transaction = pool.begin().await.unwrap();
-    let permission = Permission::new(name, description);
+    let permission = Permission::from(body.0);
     match insert_permission(transaction, &permission).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(PermissionResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get all permissions with pagination
-///
-/// # API Documentation
-///
-/// ## GET /api/permissions
-///
-/// Retrieves all permissions with optional pagination and filtering.
-///
-/// ### Query Parameters
-/// - page: Page number (optional)
-/// - size: Items per page (optional)
-/// - sort: Sort field (optional)
-/// - order: Sort order (asc/desc) (optional)
-///
-/// ### Response
-/// - 200 OK: Returns list of permissions
-/// ```json
-/// [
-///     {
-///         "id": "uuid",
-///         "name": "string",
-///         "description": "string" (optional),
-///         "created_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
-    path = "/permissions",
+    path = "/api/permissions",
     params(
         ("page" = Option<i32>, Query, description = "Page number"),
-        ("size" = Option<i32>, Query, description = "Page size"),
-        ("sort" = Option<String>, Query, description = "Sort field"),
-        ("order" = Option<String>, Query, description = "Sort order (asc/desc)")
+        ("size" = Option<i32>, Query, description = "Page size")
     ),
     responses(
         (status = 200, description = "Permissions retrieved successfully", body = DtoResponse<Vec<Permission>>),
@@ -117,36 +59,21 @@ pub async fn get_all_permissions_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match get_all_permissions(transaction, query.0).await {
-        Ok(permissions) => Ok(HttpResponse::Ok().json(permissions)),
+        Ok(permissions) => {
+            let result: Vec<PermissionResponse> = permissions
+                .data
+                .into_iter()
+                .map(PermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, permissions.pagination)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get a specific permission by ID
-///
-/// # API Documentation
-///
-/// ## GET /api/permissions/{id}
-///
-/// Retrieves a specific permission by its ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the permission
-///
-/// ### Response
-/// - 200 OK: Returns the permission
-/// ```json
-/// {
-///     "id": "uuid",
-///     "name": "string",
-///     "description": "string" (optional),
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
-    path = "/permissions/{id}",
+    path = "/api/permissions/{id}",
     params(
         ("id" = Uuid, Path, description = "Permission ID")
     ),
@@ -155,95 +82,67 @@ pub async fn get_all_permissions_route(
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
-pub async fn get_permission_route(
+pub async fn get_permission_by_id_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let permission_id = id.0;
     let transaction = pool.begin().await.unwrap();
     match get_permission_by_id(transaction, permission_id).await {
-        Ok(Some(result)) => Ok(HttpResponse::Ok().json(result)),
+        Ok(Some(result)) => Ok(HttpResponse::Ok().json(PermissionResponse::from(result))),
         Ok(None) => Err(AlohaError::DatabaseError(
             "Permission not found".to_string(),
         )),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
-
-/// Update an existing permission
-///
-/// # API Documentation
-///
-/// ## PUT /api/permissions
-///
-/// Updates an existing permission.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "id": "uuid",
-///     "name": "string",
-///     "description": "string" (optional),
-///     "created_at": "datetime"
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the updated permission
-/// ```json
-/// {
-///     "id": "uuid",
-///     "name": "string",
-///     "description": "string" (optional),
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
+#[derive(Serialize, Deserialize, Clone, ToSchema)]
+pub struct PutPermissionFormData {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+}
 #[utoipa::path(
     put,
-    path = "/permissions",
-    request_body = Permission,
+    path = "/api/permissions",
+    request_body = PutPermissionFormData,
     responses(
         (status = 200, description = "Permission updated successfully", body = Permission),
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
-pub async fn update_permission_route(
-    body: Json<Permission>,
+pub async fn update_permission_by_id_route(
+    body: Json<PutPermissionFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    match update_permission(transaction, &body).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
-        Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+
+    let find_permission = get_permission_by_id(transaction, body.0.id).await.unwrap();
+    match find_permission {
+        Some(mut permission) => {
+            permission.name = body.0.name.clone();
+            permission.description = body.0.description.clone();
+
+            let transaction = pool.begin().await.unwrap();
+
+            match update_permission(transaction, &permission).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(PermissionResponse::from(result))),
+                Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+            }
+        }
+        None => {
+            let permission = Permission::new(body.0.name, body.0.description);
+            let transaction = pool.begin().await.unwrap();
+            match insert_permission(transaction, &permission).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(PermissionResponse::from(result))),
+                Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+            }
+        }
     }
 }
-
-/// Delete a permission by ID
-///
-/// # API Documentation
-///
-/// ## DELETE /api/permissions/{id}
-///
-/// Deletes a specific permission by its ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the permission to delete
-///
-/// ### Response
-/// - 200 OK: Returns the deleted permission
-/// ```json
-/// {
-///     "id": "uuid",
-///     "name": "string",
-///     "description": "string" (optional),
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     delete,
-    path = "/permissions/{id}",
+    path = "/api/permissions/{id}",
     params(
         ("id" = Uuid, Path, description = "Permission ID")
     ),
@@ -252,13 +151,13 @@ pub async fn update_permission_route(
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
-pub async fn delete_permission_route(
+pub async fn delete_permission_by_id_route(
     id: web::Path<(Uuid,)>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match delete_permission_by_id(transaction, id.0).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(PermissionResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
@@ -267,9 +166,9 @@ pub fn permission_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope(format!("/{}", config.routes.permissions).as_str())
             .route("", web::post().to(insert_permission_route))
-            .route("/{id}", web::get().to(get_permission_route))
-            .route("", web::put().to(update_permission_route))
+            .route("/{id}", web::get().to(get_permission_by_id_route))
+            .route("/{id}", web::put().to(update_permission_by_id_route))
             .route("", web::get().to(get_all_permissions_route))
-            .route("/{id}", web::delete().to(delete_permission_route)),
+            .route("/{id}", web::delete().to(delete_permission_by_id_route)),
     );
 }

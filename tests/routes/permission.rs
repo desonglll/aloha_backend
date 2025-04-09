@@ -1,6 +1,7 @@
 use crate::helpers::spawn_app;
 use aloha_backend::mappers::permission::insert_permission;
 use aloha_backend::models::permission::Permission;
+use aloha_backend::routes::permission::PutPermissionFormData;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -86,8 +87,15 @@ async fn update_permission_returns_a_200_for_valid_form_data() {
     let mut update = insert_result.clone();
     update.name = String::from("Updated Permission");
     update.description = Some(String::from("Updated description"));
-    let json_value = serde_json::to_value(&update).unwrap();
-    let response = app.put_permission(&json_value).await.unwrap();
+
+    let update_permission = PutPermissionFormData {
+        id: update.id,
+        name: update.name.clone(),
+        description: update.description.clone(),
+    };
+
+    let json_value = serde_json::to_value(&update_permission).unwrap();
+    let response = app.put_permission(update.id, &json_value).await.unwrap();
     assert_eq!(response.name, "Updated Permission");
     assert_eq!(
         response.description,

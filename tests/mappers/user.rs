@@ -58,8 +58,8 @@ async fn test_user_crud_operations() {
     let fetched_user = get_user_by_id(transaction, user.id)
         .await
         .expect("Failed to get user by id");
-    assert_eq!(fetched_user.id, user.id);
-    assert_eq!(fetched_user.username, user.username);
+    assert_eq!(fetched_user.clone().unwrap().id, user.id);
+    assert_eq!(fetched_user.clone().unwrap().username, user.username);
 
     // Test get by username
     let transaction = pool.begin().await.expect("Failed to begin transaction");
@@ -197,5 +197,5 @@ async fn test_delete_users_by_ids() {
     let remaining_user = get_user_by_id(transaction, users[2].id)
         .await
         .expect("Failed to get remaining user");
-    assert_eq!(remaining_user.username, "bulk_user3");
+    assert_eq!(remaining_user.unwrap().username, "bulk_user3");
 }

@@ -1,3 +1,5 @@
+use crate::dto::response::get_time_formatter;
+use crate::routes::user_group::CreateUserGroupFormData;
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 use utoipa::ToSchema;
@@ -9,6 +11,38 @@ pub struct UserGroup {
     pub group_name: String,
     #[schema(value_type = String)]
     pub created_at: Option<OffsetDateTime>,
+}
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
+pub struct UserGroupResponse {
+    pub id: Uuid,
+    pub group_name: String,
+    pub created_at: Option<String>,
+}
+
+impl From<UserGroup> for UserGroupResponse {
+    fn from(value: UserGroup) -> Self {
+        Self {
+            id: value.id,
+            group_name: value.group_name,
+            created_at: Some(
+                value
+                    .created_at
+                    .unwrap()
+                    .format(&get_time_formatter())
+                    .unwrap(),
+            ),
+        }
+    }
+}
+
+impl From<CreateUserGroupFormData> for UserGroup {
+    fn from(value: CreateUserGroupFormData) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            group_name: value.group_name,
+            created_at: Some(OffsetDateTime::now_utc()),
+        }
+    }
 }
 
 impl UserGroup {
@@ -33,8 +67,7 @@ impl UserGroup {
         });
         result
     }
-    pub fn new(group_name: String) -> Self {
-        let id = Uuid::new_v4();
+    pub fn new(id: Uuid, group_name: String) -> Self {
         Self {
             id,
             group_name,

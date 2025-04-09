@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+use crate::dto::response::get_time_formatter;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
 pub struct User {
@@ -9,7 +12,7 @@ pub struct User {
     #[serde(skip_serializing)]
     pub password_hash: String,
     #[serde(skip_serializing, skip_deserializing)]
-    pub created_at: Option<String>,
+    pub created_at: Option<OffsetDateTime>,
     pub user_group_id: Option<Uuid>,
 }
 
@@ -26,7 +29,12 @@ impl From<User> for UserResponse {
         Self {
             id: user.id,
             username: user.username,
-            created_at: user.created_at,
+            created_at: Some(
+                user.created_at
+                    .unwrap()
+                    .format(&get_time_formatter())
+                    .unwrap(),
+            ),
             user_group_id: user.user_group_id,
         }
     }
@@ -38,7 +46,7 @@ impl User {
             id: Uuid::new_v4(),
             username: String::from("test_user"),
             password_hash: String::from("test_password_hash"),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: Some(OffsetDateTime::now_utc()),
             user_group_id: None,
         }
     }
@@ -51,7 +59,7 @@ impl User {
                 id: Uuid::new_v4(),
                 username: format!("test_user_{}", i),
                 password_hash: String::from("test_password_hash"),
-                created_at: Some(chrono::Utc::now().to_rfc3339()),
+                created_at: Some(OffsetDateTime::now_utc()),
                 user_group_id: None,
             };
             result.push(new);
@@ -65,7 +73,7 @@ impl User {
             id,
             username,
             password_hash,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: Some(OffsetDateTime::now_utc()),
             user_group_id,
         }
     }
