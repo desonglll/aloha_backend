@@ -5,7 +5,7 @@ use tracing::info;
 ///
 /// # API Documentation
 ///
-/// ## GET /api/health
+/// ## GET /api/health_check
 ///
 /// Simple health check endpoint to verify the API is running.
 ///
@@ -13,7 +13,7 @@ use tracing::info;
 /// - 200 OK: API is healthy
 #[utoipa::path(
     get,
-    path = "/health",
+    path = "/api/health_check",
     responses(
         (status = 200, description = "API is healthy")
     )

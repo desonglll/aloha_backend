@@ -49,7 +49,7 @@ pub(crate) struct FormData {
 /// - 500 Internal Server Error: Database error
 #[utoipa::path(
     post,
-    path = "/permissions",
+    path = "/api/permissions",
     request_body = FormData,
     responses(
         (status = 200, description = "Permission created successfully", body = Permission),
@@ -99,7 +99,7 @@ pub async fn insert_permission_route(
 /// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
-    path = "/permissions",
+    path = "/api/permissions",
     params(
         ("page" = Option<i32>, Query, description = "Page number"),
         ("size" = Option<i32>, Query, description = "Page size"),
@@ -146,7 +146,7 @@ pub async fn get_all_permissions_route(
 /// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
-    path = "/permissions/{id}",
+    path = "/api/permissions/{id}",
     params(
         ("id" = Uuid, Path, description = "Permission ID")
     ),
@@ -201,7 +201,7 @@ pub async fn get_permission_route(
 /// - 500 Internal Server Error: Database error
 #[utoipa::path(
     put,
-    path = "/permissions",
+    path = "/api/permissions",
     request_body = Permission,
     responses(
         (status = 200, description = "Permission updated successfully", body = Permission),
@@ -243,7 +243,7 @@ pub async fn update_permission_route(
 /// - 500 Internal Server Error: Database error
 #[utoipa::path(
     delete,
-    path = "/permissions/{id}",
+    path = "/api/permissions/{id}",
     params(
         ("id" = Uuid, Path, description = "Permission ID")
     ),
