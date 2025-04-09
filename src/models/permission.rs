@@ -1,3 +1,5 @@
+use crate::dto::response::get_time_formatter;
+use crate::routes::permission::CreatePermissionFormData;
 use serde::{Deserialize, Serialize};
 use sqlx::types::time::OffsetDateTime;
 use utoipa::ToSchema;
@@ -10,6 +12,41 @@ pub struct Permission {
     pub description: Option<String>,
     #[schema(value_type = String)]
     pub created_at: Option<OffsetDateTime>,
+}
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, ToSchema)]
+pub struct PermissionResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: Option<String>,
+}
+
+impl From<Permission> for PermissionResponse {
+    fn from(value: Permission) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+            description: value.description,
+            created_at: Some(
+                value
+                    .created_at
+                    .unwrap()
+                    .format(&get_time_formatter())
+                    .unwrap(),
+            ),
+        }
+    }
+}
+
+impl From<CreatePermissionFormData> for Permission {
+    fn from(value: CreatePermissionFormData) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            name: value.name,
+            description: value.description,
+            created_at: Some(OffsetDateTime::now_utc()),
+        }
+    }
 }
 
 impl Permission {

@@ -105,19 +105,20 @@ async fn update_user_returns_a_200_for_valid_form_data() {
     let insert_result = insert_user(transaction, &default_user).await.unwrap();
 
     let body = serde_json::json!({
+        "id": insert_result.id,
         "username": "updated_username",
-        "password": null,
+        "password": "hello",
         "user_group_id": user_group_result.id
     });
 
     let mock_server = MockServer::start().await;
-    Mock::given(path("/user/{id}"))
+    Mock::given(path("/users"))
         .and(method("PUT"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&mock_server)
         .await;
 
-    let response = app.put_user(insert_result.id, &body).await.unwrap();
+    let response = app.put_user(&body).await.unwrap();
     assert_eq!(response.username, "updated_username");
 }
 

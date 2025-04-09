@@ -100,8 +100,8 @@ async fn get_group_permissions_by_group_id_returns_a_200() {
         .get_group_permissions_by_group_id(user_group.id)
         .await
         .unwrap();
-    assert!(!response.is_empty());
-    assert_eq!(response[0].group_id, user_group.id);
+    assert!(!response.data.is_empty());
+    assert_eq!(response.data[0].group_id, user_group.id);
 }
 
 #[tokio::test]
@@ -136,8 +136,8 @@ async fn get_group_permissions_by_permission_id_returns_a_200() {
         .get_group_permissions_by_permission_id(permission.id)
         .await
         .unwrap();
-    assert!(!response.is_empty());
-    assert_eq!(response[0].permission_id, permission.id);
+    assert!(!response.data.is_empty());
+    assert_eq!(response.data[0].permission_id, permission.id);
 }
 
 #[tokio::test]
@@ -208,8 +208,8 @@ async fn delete_group_permissions_by_group_id_returns_a_200() {
         .delete_group_permissions_by_group_id(user_group.id)
         .await
         .unwrap();
-    assert!(!response.is_empty());
-    assert_eq!(response[0].group_id, user_group.id);
+    assert!(!response.data.is_empty());
+    assert_eq!(response.data[0].group_id, user_group.id);
 }
 
 #[tokio::test]
@@ -244,6 +244,6 @@ async fn delete_group_permissions_by_permission_id_returns_a_200() {
         .delete_group_permissions_by_permission_id(permission.id)
         .await
         .unwrap();
-    assert!(!response.is_empty());
-    assert_eq!(response[0].permission_id, permission.id);
+    assert!(!response.data.is_empty());
+    assert_eq!(response.data[0].permission_id, permission.id);
 }

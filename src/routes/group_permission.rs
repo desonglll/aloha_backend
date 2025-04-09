@@ -8,7 +8,7 @@ use crate::mappers::group_permission::{
     get_group_permissions_by_group_id, get_group_permissions_by_permission_id,
     insert_group_permission,
 };
-use crate::models::group_permission::GroupPermission;
+use crate::models::group_permission::{GroupPermission, GroupPermissionResponse};
 use actix_web::web::{self, Data, Json, Path, Query};
 use actix_web::HttpResponse;
 use serde::Deserialize;
@@ -17,90 +17,32 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize, Clone, ToSchema)]
-pub struct FormData {
+pub struct CreateGroupPermissionFormData {
     pub group_id: Uuid,
     pub permission_id: Uuid,
 }
 
-/// Create a new group permission
-///
-/// # API Documentation
-///
-/// ## POST /api/group_permissions
-///
-/// Creates a new group permission mapping.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "group_id": "uuid",
-///     "permission_id": "uuid"
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the created group permission
-/// ```json
-/// {
-///     "group_id": "uuid",
-///     "permission_id": "uuid",
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     post,
     path = "/api/group_permissions",
-    request_body = FormData,
+    request_body = CreateGroupPermissionFormData,
     responses(
         (status = 200, description = "Group permission created successfully", body = GroupPermission),
         (status = 400, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn insert_group_permission_route(
-    body: Json<FormData>,
+    body: Json<CreateGroupPermissionFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    let group_permission = GroupPermission::new(body.group_id, body.permission_id);
+    let group_permission = GroupPermission::from(body.0);
     match insert_group_permission(transaction, &group_permission).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(GroupPermissionResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get all group permissions with pagination
-///
-/// # API Documentation
-///
-/// ## GET /api/group_permissions
-///
-/// Retrieves all group permissions with optional pagination.
-///
-/// ### Query Parameters
-/// - page: Page number (optional)
-/// - size: Items per page (optional)
-///
-/// ### Response
-/// - 200 OK: Returns list of group permissions
-/// ```json
-/// {
-///     "data": [
-///         {
-///             "group_id": "uuid",
-///             "permission_id": "uuid",
-///             "created_at": "datetime"
-///         }
-///     ],
-///     "pagination": {
-///         "total": 1,
-///         "page": 1,
-///         "size": 10,
-///         "pages": 1
-///     }
-/// }
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
     path = "/api/group_permissions",
@@ -119,34 +61,18 @@ pub async fn get_all_group_permissions_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match get_all_group_permissions(transaction, query.0).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(group_permissions) => {
+            let result: Vec<GroupPermissionResponse> = group_permissions
+                .data
+                .into_iter()
+                .map(GroupPermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, group_permissions.pagination)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get group permissions by group ID
-///
-/// # API Documentation
-///
-/// ## GET /api/group_permissions/group/{group_id}
-///
-/// Retrieves all permissions for a specific group.
-///
-/// ### Path Parameters
-/// - group_id: UUID of the group
-///
-/// ### Response
-/// - 200 OK: Returns list of group permissions
-/// ```json
-/// [
-///     {
-///         "group_id": "uuid",
-///         "permission_id": "uuid",
-///         "created_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
     path = "/api/group_permissions/group/{group_id}",
@@ -164,34 +90,17 @@ pub async fn get_group_permissions_by_group_id_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match get_group_permissions_by_group_id(transaction, *group_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(group_permissions) => {
+            let result: Vec<GroupPermissionResponse> = group_permissions
+                .into_iter()
+                .map(GroupPermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, None)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get group permissions by permission ID
-///
-/// # API Documentation
-///
-/// ## GET /api/group_permissions/permission/{permission_id}
-///
-/// Retrieves all groups that have a specific permission.
-///
-/// ### Path Parameters
-/// - permission_id: UUID of the permission
-///
-/// ### Response
-/// - 200 OK: Returns list of group permissions
-/// ```json
-/// [
-///     {
-///         "group_id": "uuid",
-///         "permission_id": "uuid",
-///         "created_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     get,
     path = "/api/group_permissions/permission/{permission_id}",
@@ -209,80 +118,41 @@ pub async fn get_group_permissions_by_permission_id_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match get_group_permissions_by_permission_id(transaction, *permission_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(group_permissions) => {
+            let result: Vec<GroupPermissionResponse> = group_permissions
+                .into_iter()
+                .map(GroupPermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, None)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
-
-/// Delete a group permission
-///
-/// # API Documentation
-///
-/// ## DELETE /api/group_permissions
-///
-/// Deletes a specific group permission mapping.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "group_id": "uuid",
-///     "permission_id": "uuid"
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the deleted group permission
-/// ```json
-/// {
-///     "group_id": "uuid",
-///     "permission_id": "uuid",
-///     "created_at": "datetime"
-/// }
-/// ```
-/// - 400 Bad Request: Database error
+#[derive(Deserialize, Clone, ToSchema)]
+pub struct DeleteGroupPermissionFormData {
+    pub group_id: Uuid,
+    pub permission_id: Uuid,
+}
 #[utoipa::path(
     delete,
     path = "/api/group_permissions",
-    request_body = FormData,
+    request_body =DeleteGroupPermissionFormData,
     responses(
         (status = 200, description = "Group permission deleted successfully", body = GroupPermission),
         (status = 400, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn delete_group_permission_route(
-    body: Json<FormData>,
+    body: Json<DeleteGroupPermissionFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match delete_group_permission(transaction, body.group_id, body.permission_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(GroupPermissionResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Delete all permissions for a group
-///
-/// # API Documentation
-///
-/// ## DELETE /api/group_permissions/group/{group_id}
-///
-/// Deletes all permission mappings for a specific group.
-///
-/// ### Path Parameters
-/// - group_id: UUID of the group
-///
-/// ### Response
-/// - 200 OK: Returns list of deleted group permissions
-/// ```json
-/// [
-///     {
-///         "group_id": "uuid",
-///         "permission_id": "uuid",
-///         "created_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     delete,
     path = "/api/group_permissions/group/{group_id}",
@@ -300,34 +170,17 @@ pub async fn delete_group_permissions_by_group_id_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match delete_group_permissions_by_group_id(transaction, *group_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(group_permissions) => {
+            let result: Vec<GroupPermissionResponse> = group_permissions
+                .into_iter()
+                .map(GroupPermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, None)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Delete all groups for a permission
-///
-/// # API Documentation
-///
-/// ## DELETE /api/group_permissions/permission/{permission_id}
-///
-/// Deletes all group mappings for a specific permission.
-///
-/// ### Path Parameters
-/// - permission_id: UUID of the permission
-///
-/// ### Response
-/// - 200 OK: Returns list of deleted group permissions
-/// ```json
-/// [
-///     {
-///         "group_id": "uuid",
-///         "permission_id": "uuid",
-///         "created_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 400 Bad Request: Database error
 #[utoipa::path(
     delete,
     path = "/api/group_permissions/permission/{permission_id}",
@@ -345,7 +198,13 @@ pub async fn delete_group_permissions_by_permission_id_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match delete_group_permissions_by_permission_id(transaction, *permission_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(group_permissions) => {
+            let result: Vec<GroupPermissionResponse> = group_permissions
+                .into_iter()
+                .map(GroupPermissionResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(result, None)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }

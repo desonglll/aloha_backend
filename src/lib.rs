@@ -5,5 +5,5 @@ pub mod models;
 pub mod api_doc;
 pub mod dto;
 pub mod error;
-mod routes;
+pub mod routes;
 pub mod startup;

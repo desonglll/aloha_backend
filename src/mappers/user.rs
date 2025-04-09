@@ -37,7 +37,7 @@ pub async fn get_all_users(
             id: row.id,
             username: row.username,
             password_hash: row.password_hash,
-            created_at: row.created_at.map(|dt| dt.to_string()),
+            created_at: row.created_at,
             user_group_id: row.user_group_id,
         })
         .collect();
@@ -53,8 +53,9 @@ pub async fn get_all_users(
 pub async fn get_user_by_id(
     mut transaction: Transaction<'_, Postgres>,
     id: Uuid,
-) -> Result<User, anyhow::Error> {
-    let row = sqlx::query!(
+) -> Result<Option<User>, anyhow::Error> {
+    let row = sqlx::query_as!(
+        User,
         r#"
         SELECT id, username, password_hash, created_at, user_group_id 
         FROM users 
@@ -62,17 +63,10 @@ pub async fn get_user_by_id(
         "#,
         id
     )
-    .fetch_one(&mut *transaction)
+    .fetch_optional(&mut *transaction)
     .await
     .context("Failed to fetch user")?;
-
-    Ok(User {
-        id: row.id,
-        username: row.username,
-        password_hash: row.password_hash,
-        created_at: row.created_at.map(|dt| dt.to_string()),
-        user_group_id: row.user_group_id,
-    })
+    Ok(row)
 }
 
 pub async fn get_user_by_username(
@@ -95,7 +89,7 @@ pub async fn get_user_by_username(
         id: row.id,
         username: row.username,
         password_hash: row.password_hash,
-        created_at: row.created_at.map(|dt| dt.to_string()),
+        created_at: row.created_at,
         user_group_id: row.user_group_id,
     })
 }
@@ -128,7 +122,7 @@ pub async fn insert_user(
         id: row.id,
         username: row.username,
         password_hash: row.password_hash,
-        created_at: row.created_at.map(|dt| dt.to_string()),
+        created_at: row.created_at,
         user_group_id: row.user_group_id,
     })
 }
@@ -158,7 +152,7 @@ pub async fn delete_user_by_id(
         id: row.id,
         username: row.username,
         password_hash: row.password_hash,
-        created_at: row.created_at.map(|dt| dt.to_string()),
+        created_at: row.created_at,
         user_group_id: row.user_group_id,
     })
 }
@@ -192,7 +186,7 @@ pub async fn update_user(
         id: row.id,
         username: row.username,
         password_hash: row.password_hash,
-        created_at: row.created_at.map(|dt| dt.to_string()),
+        created_at: row.created_at,
         user_group_id: row.user_group_id,
     })
 }
@@ -224,7 +218,7 @@ pub async fn delete_users_by_ids(
             id: row.id,
             username: row.username,
             password_hash: row.password_hash,
-            created_at: row.created_at.map(|dt| dt.to_string()),
+            created_at: row.created_at,
             user_group_id: row.user_group_id,
         })
         .collect();

@@ -14,40 +14,12 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize, Clone, ToSchema)]
-pub(crate) struct CreateUserFormData {
+pub struct CreateUserFormData {
     username: String,
     password: String,
     user_group_id: Option<Uuid>,
 }
 
-/// Create a new user
-///
-/// # API Documentation
-///
-/// ## POST /api/users
-///
-/// Creates a new user with the provided information.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "username": "string",
-///     "password": "string",
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the created user
-/// ```json
-/// {
-///     "id": "uuid",
-///     "username": "string",
-///     "created_at": "datetime",
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     post,
     path = "/api/users",
@@ -71,33 +43,6 @@ pub async fn insert_user_route(
     }
 }
 
-/// Get all users with pagination
-///
-/// # API Documentation
-///
-/// ## GET /api/users
-///
-/// Retrieves all users with optional pagination and filtering.
-///
-/// ### Query Parameters
-/// - page: Page number (optional)
-/// - size: Items per page (optional)
-/// - sort: Sort field (optional)
-/// - order: Sort order (asc/desc) (optional)
-///
-/// ### Response
-/// - 200 OK: Returns list of users
-/// ```json
-/// [
-///     {
-///         "id": "uuid",
-///         "username": "string",
-///         "created_at": "datetime",
-///         "user_group_id": "uuid" (optional)
-///     }
-/// ]
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
     path = "/api/users",
@@ -127,28 +72,6 @@ pub async fn get_all_users_route(
     }
 }
 
-/// Get a specific user by ID
-///
-/// # API Documentation
-///
-/// ## GET /api/users/{id}
-///
-/// Retrieves a specific user by their ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the user
-///
-/// ### Response
-/// - 200 OK: Returns the user
-/// ```json
-/// {
-///     "id": "uuid",
-///     "username": "string",
-///     "created_at": "datetime",
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
     path = "/api/users/{id}",
@@ -167,121 +90,66 @@ pub async fn get_user_route(
     let user_id = id.0;
     let transaction = pool.begin().await.unwrap();
     match get_user_by_id(transaction, user_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
+        Ok(Some(result)) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
+        Ok(None) => Err(AlohaError::DatabaseError(
+            "User Group not found".to_string(),
+        )),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-#[derive(Deserialize, Clone, ToSchema)]
-pub(crate) struct UpdateUserFormData {
-    username: String,
-    password: Option<String>,
-    user_group_id: Option<Uuid>,
+#[derive(Deserialize, Debug, Clone, ToSchema)]
+pub struct PutUserFormData {
+    pub id: Uuid,
+    pub username: String,
+    pub password: Option<String>,
+    pub user_group_id: Option<Uuid>,
 }
 
-/// Update an existing user
-///
-/// # API Documentation
-///
-/// ## PUT /api/users/{id}
-///
-/// Updates an existing user.
-///
-/// ### Path Parameters
-/// - id: UUID of the user to update
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "username": "string",
-///     "password": "string" (optional),
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the updated user
-/// ```json
-/// {
-///     "id": "uuid",
-///     "username": "string",
-///     "created_at": "datetime",
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     put,
-    path = "/api/users/{id}",
-    params(
-        ("id" = Uuid, Path, description = "User ID")
-    ),
-    request_body = UpdateUserFormData,
+    path = "/api/users",
+    request_body = PutUserFormData,
     responses(
         (status = 200, description = "User updated successfully", body = UserResponse),
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn update_user_route(
-    id: web::Path<(Uuid,)>,
-    body: Json<UpdateUserFormData>,
+    body: Json<PutUserFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
-    let user_id = id.0;
     let transaction = pool.begin().await.unwrap();
+    dbg!(&body);
 
-    // First get the existing user to preserve password if not provided
-    let existing_user = match get_user_by_id(transaction, user_id).await {
+    let find_user = match get_user_by_id(transaction, body.0.id).await {
         Ok(user) => user,
         Err(e) => return Err(AlohaError::DatabaseError(e.to_string())),
     };
+    match find_user {
+        Some(mut u) => {
+            let transaction = pool.begin().await.unwrap();
+            u.username = body.username.clone();
+            u.user_group_id = body.user_group_id;
+            u.password_hash = body.password.clone().unwrap();
 
-    // Start a new transaction
-    let transaction = pool.begin().await.unwrap();
-
-    // Update the user with new values
-    let password_hash = match &body.password {
-        Some(password) => password.clone(), // Again, this should be hashed in production
-        None => existing_user.password_hash,
-    };
-
-    let updated_user = User {
-        id: user_id,
-        username: body.username.clone(),
-        password_hash,
-        created_at: existing_user.created_at,
-        user_group_id: body.user_group_id,
-    };
-
-    match update_user(transaction, &updated_user).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
-        Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+            match update_user(transaction, &u).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
+                Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+            }
+        }
+        None => {
+            let transaction = pool.begin().await.unwrap();
+            let password_hash = body.password.clone().unwrap();
+            let user = User::new(body.username.clone(), password_hash, body.user_group_id);
+            match insert_user(transaction, &user).await {
+                Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
+                Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+            }
+        }
     }
 }
-/// Delete multiple users by their IDs
-///
-/// # API Documentation
-///
-/// ## DELETE /api/users
-///
-/// Deletes multiple users by their IDs.
-///
-/// ### Request Body
-/// ```json
-/// [
-///     "uuid",
-///     "uuid"
-/// ]
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the number of deleted users
-/// ```json
-/// {
-///     "count": 2
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
+
 #[utoipa::path(
     delete,
     path = "/api/users",
@@ -307,28 +175,6 @@ pub async fn delete_users_route(
     }
 }
 
-/// Delete a specific user by ID
-///
-/// # API Documentation
-///
-/// ## DELETE /api/users/{id}
-///
-/// Deletes a specific user by their ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the user
-///
-/// ### Response
-/// - 200 OK: Returns the deleted user
-/// ```json
-/// {
-///     "id": "uuid",
-///     "username": "string",
-///     "created_at": "datetime",
-///     "user_group_id": "uuid" (optional)
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     delete,
     path = "/api/users/{id}",
@@ -357,7 +203,7 @@ pub fn user_routes(cfg: &mut web::ServiceConfig) {
         web::scope(format!("/{}", config.routes.users).as_str())
             .route("", web::post().to(insert_user_route))
             .route("/{id}", web::get().to(get_user_route))
-            .route("/{id}", web::put().to(update_user_route))
+            .route("", web::put().to(update_user_route))
             .route("", web::get().to(get_all_users_route))
             .route("/{id}", web::delete().to(delete_user_route))
             .route("", web::delete().to(delete_users_route)),

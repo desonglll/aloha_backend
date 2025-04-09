@@ -35,3 +35,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/aloha
 - [ ] test for user_group
 - [ ] test for user
 - [ ] test for tweet
+
+- [x] fix for user_group
+- [x] fix for permission
+- [x] fix for group_permission
+- [x] fix for user
+- [ ] fix for tweet

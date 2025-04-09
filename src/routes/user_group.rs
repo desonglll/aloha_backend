@@ -5,94 +5,40 @@ use crate::error::AlohaError;
 use crate::mappers::user_group::{
     delete_user_group_by_id, get_all_groups, get_group_by_id, insert_user_group, update_user_group,
 };
-use crate::models::user_group::UserGroup;
+use crate::models::user_group::{UserGroup, UserGroupResponse};
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize, Clone, ToSchema)]
-pub(crate) struct FormData {
-    group_name: String,
+pub struct CreateUserGroupFormData {
+    pub group_name: String,
 }
 
-/// Create a new user group
-///
-/// # API Documentation
-///
-/// ## POST /api/user_groups
-///
-/// Creates a new user group with the specified name.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "group_name": "string"
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the created user group
-/// ```json
-/// {
-///     "id": "uuid",
-///     "group_name": "string",
-///     "created_at": "datetime",
-///     "updated_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     post,
     path = "/api/user_groups",
-    request_body = FormData,
+    request_body = CreateUserGroupFormData,
     responses(
         (status = 200, description = "User group created successfully", body = UserGroup),
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn insert_user_group_route(
-    body: Json<FormData>,
+    body: Json<CreateUserGroupFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
-    let group_name = body.group_name.clone();
     let transaction = pool.begin().await.unwrap();
-    let user_group = UserGroup::new(group_name.clone());
+    let user_group = UserGroup::from(body.0);
     match insert_user_group(transaction, &user_group).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(UserGroupResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get all user groups with pagination
-///
-/// # API Documentation
-///
-/// ## GET /api/user_groups
-///
-/// Retrieves all user groups with optional pagination and filtering.
-///
-/// ### Query Parameters
-/// - page: Page number (optional)
-/// - size: Items per page (optional)
-/// - sort: Sort field (optional)
-/// - order: Sort order (asc/desc) (optional)
-///
-/// ### Response
-/// - 200 OK: Returns list of user groups
-/// ```json
-/// [
-///     {
-///         "id": "uuid",
-///         "group_name": "string",
-///         "created_at": "datetime",
-///         "updated_at": "datetime"
-///     }
-/// ]
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
     path = "/api/user_groups",
@@ -113,33 +59,18 @@ pub async fn get_all_user_groups_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match get_all_groups(transaction, query.0).await {
-        Ok(user_groups) => Ok(HttpResponse::Ok().json(user_groups)),
+        Ok(user_groups) => {
+            let groups: Vec<UserGroupResponse> = user_groups
+                .data
+                .into_iter()
+                .map(UserGroupResponse::from)
+                .collect();
+            Ok(HttpResponse::Ok().json(DtoResponse::new(groups, user_groups.pagination)))
+        }
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Get a specific user group by ID
-///
-/// # API Documentation
-///
-/// ## GET /api/user_groups/{id}
-///
-/// Retrieves a specific user group by its ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the user group
-///
-/// ### Response
-/// - 200 OK: Returns the user group
-/// ```json
-/// {
-///     "id": "uuid",
-///     "group_name": "string",
-///     "created_at": "datetime",
-///     "updated_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     get,
     path = "/api/user_groups/{id}",
@@ -158,82 +89,43 @@ pub async fn get_user_group_route(
     let user_id = id.0;
     let transaction = pool.begin().await.unwrap();
     match get_group_by_id(transaction, user_id).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(UserGroupResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Update an existing user group
-///
-/// # API Documentation
-///
-/// ## PUT /api/user_groups
-///
-/// Updates an existing user group.
-///
-/// ### Request Body
-/// ```json
-/// {
-///     "id": "uuid",
-///     "group_name": "string",
-///     "created_at": "datetime",
-///     "updated_at": "datetime"
-/// }
-/// ```
-///
-/// ### Response
-/// - 200 OK: Returns the updated user group
-/// ```json
-/// {
-///     "id": "uuid",
-///     "group_name": "string",
-///     "created_at": "datetime",
-///     "updated_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
+#[derive(Deserialize, Serialize, Clone, ToSchema)]
+pub struct PutUserGroupFormData {
+    pub id: Uuid,
+    pub group_name: String,
+}
+
 #[utoipa::path(
     put,
     path = "/api/user_groups",
-    request_body = UserGroup,
+    request_body = PutUserGroupFormData,
     responses(
         (status = 200, description = "User group updated successfully", body = UserGroup),
         (status = 500, description = "Database error", body = AlohaError)
     )
 )]
 pub async fn update_user_group_route(
-    body: Json<UserGroup>,
+    body: Json<PutUserGroupFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    match update_user_group(transaction, &body).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+
+    let mut user_group = get_group_by_id(transaction, body.0.id).await.unwrap();
+    user_group.group_name = body.group_name.clone();
+
+    let transaction = pool.begin().await.unwrap();
+
+    match update_user_group(transaction, &user_group).await {
+        Ok(result) => Ok(HttpResponse::Ok().json(UserGroupResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
 
-/// Delete a user group by ID
-///
-/// # API Documentation
-///
-/// ## DELETE /api/user_groups/{id}
-///
-/// Deletes a specific user group by its ID.
-///
-/// ### Path Parameters
-/// - id: UUID of the user group to delete
-///
-/// ### Response
-/// - 200 OK: Returns the deleted user group
-/// ```json
-/// {
-///     "id": "uuid",
-///     "group_name": "string",
-///     "created_at": "datetime",
-///     "updated_at": "datetime"
-/// }
-/// ```
-/// - 500 Internal Server Error: Database error
 #[utoipa::path(
     delete,
     path = "/api/user_groups/{id}",
@@ -251,7 +143,7 @@ pub async fn delete_user_group_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     match delete_user_group_by_id(transaction, id.0).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Ok(result) => Ok(HttpResponse::Ok().json(UserGroupResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }

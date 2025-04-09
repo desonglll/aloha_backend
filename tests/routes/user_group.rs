@@ -1,6 +1,7 @@
 use crate::helpers::spawn_app;
 use aloha_backend::mappers::user_group::insert_user_group;
 use aloha_backend::models::user_group::UserGroup;
+use aloha_backend::routes::user_group::PutUserGroupFormData;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -56,7 +57,7 @@ async fn get_user_group_returns_a_200_for_valid_id() {
         .mount(&mock_server)
         .await;
     let response = app.get_user_group_by_id(insert_result.id).await.unwrap();
-    assert_eq!(response, insert_result);
+    assert_eq!(response, insert_result.into());
 }
 
 #[tokio::test]
@@ -69,7 +70,7 @@ async fn update_user_group_returns_a_200_for_valid_form_data() {
         .unwrap();
 
     let mock_server = MockServer::start().await;
-    Mock::given(path("/user_group"))
+    Mock::given(path("/user_groups"))
         .and(method("PUT"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&mock_server)
@@ -77,9 +78,15 @@ async fn update_user_group_returns_a_200_for_valid_form_data() {
 
     let mut update = insert_result.clone();
     update.group_name = String::from("Updated Group");
-    let json_value = serde_json::to_value(&update).unwrap();
+
+    let update_user_group = PutUserGroupFormData {
+        id: insert_result.id,
+        group_name: String::from("Updated Group"),
+    };
+    let json_value = serde_json::to_value(&update_user_group).unwrap();
+    dbg!(&json_value);
     let response = app.put_user_group(&json_value).await.unwrap();
-    assert_eq!(response, update);
+    assert_eq!(response, update.into());
 }
 
 #[tokio::test]
@@ -97,5 +104,5 @@ async fn delete_user_group_returns_a_200_for_valid_id() {
         .mount(&mock_server)
         .await;
     let response = app.delete_user_group(insert_result.id).await.unwrap();
-    assert_eq!(response, insert_result);
+    assert_eq!(response, insert_result.into());
 }
