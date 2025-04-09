@@ -5,6 +5,7 @@ use aloha_backend::models::group_permission::GroupPermissionResponse;
 use aloha_backend::models::permission::PermissionResponse;
 use aloha_backend::models::user::UserResponse;
 use aloha_backend::models::user_group::UserGroupResponse;
+use aloha_backend::models::user_permission::UserPermissionResponse;
 use aloha_backend::startup::{get_connection_pool, Application};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
@@ -354,6 +355,112 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
             .json::<DtoResponse<Vec<GroupPermissionResponse>>>()
+            .await
+    }
+
+    pub async fn post_user_permission(
+        &self,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<UserPermissionResponse> {
+        self.api_client
+            .post(format!("{}/user_permissions", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserPermissionResponse>()
+            .await
+    }
+
+    pub async fn get_all_user_permissions(
+        &self,
+    ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
+        self.api_client
+            .get(format!("{}/user_permissions", self.address))
+            .query(&DtoQuery::default_query())
+            .send()
+            .await?
+            .json::<DtoResponse<Vec<UserPermissionResponse>>>()
+            .await
+    }
+
+    pub async fn get_user_permissions_by_user_id(
+        &self,
+        user_id: Uuid,
+    ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
+        self.api_client
+            .get(format!(
+                "{}/user_permissions/user/{}",
+                self.address, user_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<DtoResponse<Vec<UserPermissionResponse>>>()
+            .await
+    }
+
+    pub async fn get_user_permissions_by_permission_id(
+        &self,
+        permission_id: Uuid,
+    ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
+        self.api_client
+            .get(format!(
+                "{}/user_permissions/permission/{}",
+                self.address, permission_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<DtoResponse<Vec<UserPermissionResponse>>>()
+            .await
+    }
+
+    pub async fn delete_user_permission(
+        &self,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<UserPermissionResponse> {
+        self.api_client
+            .delete(format!("{}/user_permissions", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<UserPermissionResponse>()
+            .await
+    }
+
+    pub async fn delete_user_permissions_by_user_id(
+        &self,
+        user_id: Uuid,
+    ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
+        self.api_client
+            .delete(format!(
+                "{}/user_permissions/user/{}",
+                self.address, user_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<DtoResponse<Vec<UserPermissionResponse>>>()
+            .await
+    }
+
+    pub async fn delete_user_permissions_by_permission_id(
+        &self,
+        permission_id: Uuid,
+    ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
+        self.api_client
+            .delete(format!(
+                "{}/user_permissions/permission/{}",
+                self.address, permission_id
+            ))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<DtoResponse<Vec<UserPermissionResponse>>>()
             .await
     }
 }
