@@ -9,6 +9,7 @@ use aloha_backend::mappers::user_permission::{
 use aloha_backend::models::permission::Permission;
 use aloha_backend::models::user::User;
 use aloha_backend::models::user_permission::UserPermission;
+use uuid;
 
 #[tokio::test]
 async fn insert_user_permission_works() {
@@ -168,9 +169,17 @@ async fn delete_user_permissions_by_user_id_works() {
     let mut transaction = app.db_pool.begin().await.unwrap();
 
     // Create a user and permissions
-    let user = User::default_test();
-    let permission1 = Permission::default_test();
-    let permission2 = Permission::default_test();
+    let mut user = User::default_test();
+    // Make username unique to avoid constraint violation
+    user.username = format!("user_{}", uuid::Uuid::new_v4());
+
+    let mut permission1 = Permission::default_test();
+    // Make permission names unique to avoid constraint violation
+    permission1.name = format!("permission_{}", uuid::Uuid::new_v4());
+
+    let mut permission2 = Permission::default_test();
+    permission2.name = format!("permission_{}", uuid::Uuid::new_v4());
+
     insert_user(transaction, &user).await.unwrap();
     transaction = app.db_pool.begin().await.unwrap();
     insert_permission(transaction, &permission1).await.unwrap();
@@ -213,9 +222,17 @@ async fn delete_user_permissions_by_permission_id_works() {
     let mut transaction = app.db_pool.begin().await.unwrap();
 
     // Create users and a permission
-    let user1 = User::default_test();
-    let user2 = User::default_test();
-    let permission = Permission::default_test();
+    let mut user1 = User::default_test();
+    // Make usernames unique to avoid constraint violation
+    user1.username = format!("user_{}", uuid::Uuid::new_v4());
+
+    let mut user2 = User::default_test();
+    user2.username = format!("user_{}", uuid::Uuid::new_v4());
+
+    let mut permission = Permission::default_test();
+    // Make permission name unique to avoid constraint violation
+    permission.name = format!("permission_{}", uuid::Uuid::new_v4());
+
     insert_user(transaction, &user1).await.unwrap();
     transaction = app.db_pool.begin().await.unwrap();
     insert_user(transaction, &user2).await.unwrap();
