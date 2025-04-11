@@ -1,5 +1,5 @@
 use crate::configuration::get_configuration;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, UserGroupFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user_group::{
@@ -54,7 +54,7 @@ pub async fn insert_user_group_route(
     )
 )]
 pub async fn get_all_user_groups_route(
-    query: web::Query<DtoQuery>,
+    query: web::Query<DtoQuery<UserGroupFilterQuery>>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();

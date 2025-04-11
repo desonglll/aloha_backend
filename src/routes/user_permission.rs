@@ -1,5 +1,5 @@
 use crate::configuration::get_configuration;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, UserPermissionFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user_permission::{
@@ -55,7 +55,7 @@ pub async fn insert_user_permission_route(
     )
 )]
 pub async fn get_all_user_permissions_route(
-    query: Query<DtoQuery>,
+    query: Query<DtoQuery<UserPermissionFilterQuery>>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();

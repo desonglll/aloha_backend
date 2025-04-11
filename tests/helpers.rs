@@ -1,5 +1,8 @@
 use aloha_backend::configuration::{get_configuration, DatabaseSettings};
-use aloha_backend::dto::query::DtoQuery;
+use aloha_backend::dto::query::{
+    DtoQuery, GroupPermissionFilterQuery, PermissionFilterQuery, UserFilterQuery,
+    UserGroupFilterQuery, UserPermissionFilterQuery,
+};
 use aloha_backend::dto::response::DtoResponse;
 use aloha_backend::models::group_permission::GroupPermissionResponse;
 use aloha_backend::models::permission::PermissionResponse;
@@ -85,7 +88,7 @@ impl TestApp {
     ) -> reqwest::Result<DtoResponse<Vec<UserGroupResponse>>> {
         self.api_client
             .get(format!("{}/user_groups", self.address))
-            .query(&DtoQuery::default_query())
+            .query(&DtoQuery::<UserGroupFilterQuery>::default_query())
             .send()
             .await?
             .json::<DtoResponse<Vec<UserGroupResponse>>>()
@@ -139,7 +142,7 @@ impl TestApp {
     pub async fn get_all_users(&self) -> reqwest::Result<DtoResponse<Vec<UserResponse>>> {
         self.api_client
             .get(format!("{}/users", self.address))
-            .query(&DtoQuery::default_query())
+            .query(&DtoQuery::<UserFilterQuery>::default_query())
             .send()
             .await?
             .json::<DtoResponse<Vec<UserResponse>>>()
@@ -209,7 +212,7 @@ impl TestApp {
     ) -> reqwest::Result<DtoResponse<Vec<PermissionResponse>>> {
         self.api_client
             .get(format!("{}/permissions", self.address))
-            .query(&DtoQuery::default_query())
+            .query(&DtoQuery::<PermissionFilterQuery>::default_query())
             .send()
             .await?
             .json::<DtoResponse<Vec<PermissionResponse>>>()
@@ -228,11 +231,10 @@ impl TestApp {
 
     pub async fn put_permission(
         &self,
-        id: Uuid,
         body: &serde_json::Value,
     ) -> reqwest::Result<PermissionResponse> {
         self.api_client
-            .put(format!("{}/permissions/{}", self.address, id))
+            .put(format!("{}/permissions", self.address))
             .header("Content-Type", "application/json")
             .json(body)
             .send()
@@ -272,7 +274,7 @@ impl TestApp {
     ) -> reqwest::Result<DtoResponse<Vec<GroupPermissionResponse>>> {
         self.api_client
             .get(format!("{}/group_permissions", self.address))
-            .query(&DtoQuery::default_query())
+            .query(&DtoQuery::<GroupPermissionFilterQuery>::default_query())
             .send()
             .await?
             .json::<DtoResponse<Vec<GroupPermissionResponse>>>()
@@ -378,7 +380,7 @@ impl TestApp {
     ) -> reqwest::Result<DtoResponse<Vec<UserPermissionResponse>>> {
         self.api_client
             .get(format!("{}/user_permissions", self.address))
-            .query(&DtoQuery::default_query())
+            .query(&DtoQuery::<UserPermissionFilterQuery>::default_query())
             .send()
             .await?
             .json::<DtoResponse<Vec<UserPermissionResponse>>>()

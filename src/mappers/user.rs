@@ -1,6 +1,6 @@
-use crate::dto::pagination::Pagination;
 use crate::dto::query::DtoQuery;
 use crate::dto::response::DtoResponse;
+use crate::dto::{pagination::Pagination, query::UserFilterQuery};
 use crate::models::user::User;
 use anyhow::Context;
 use sqlx::{Postgres, Transaction};
@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 pub async fn get_all_users(
     mut transaction: Transaction<'_, Postgres>,
-    dto_query: DtoQuery,
+    dto_query: DtoQuery<UserFilterQuery>,
 ) -> Result<DtoResponse<Vec<User>>, anyhow::Error> {
     let offset = dto_query.offset() as i64;
     let limit = dto_query.size() as i64;
@@ -17,13 +17,22 @@ pub async fn get_all_users(
         .await?
         .count;
 
+    let mut group_id = None;
+    println!("dto_query: {:?}", dto_query);
+    if let Some(filter) = dto_query.filter.clone() {
+        group_id = filter.user_group_id;
+        println!("group_id: {:?}", group_id);
+    }
+
     let rows = sqlx::query!(
         r#"
         SELECT id, username, password_hash, created_at, user_group_id 
         FROM users 
+        WHERE user_group_id IS NOT DISTINCT FROM $1
         ORDER BY id 
-        LIMIT $1 OFFSET $2
+        LIMIT $2 OFFSET $3
         "#,
+        group_id,
         limit,
         offset
     )

@@ -1,5 +1,5 @@
 use crate::configuration::get_configuration;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, UserFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::user::{
@@ -9,6 +9,7 @@ use crate::models::user::{User, UserResponse};
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
+use serde_qs::actix::QsQuery;
 use sqlx::PgPool;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -58,11 +59,11 @@ pub async fn insert_user_route(
     )
 )]
 pub async fn get_all_users_route(
-    query: web::Query<DtoQuery>,
+    query: QsQuery<DtoQuery<UserFilterQuery>>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    match get_all_users(transaction, query.0).await {
+    match get_all_users(transaction, query.into_inner()).await {
         Ok(users) => {
             let user_responses: Vec<UserResponse> =
                 users.data.into_iter().map(UserResponse::from).collect();
@@ -131,7 +132,9 @@ pub async fn update_user_route(
             let transaction = pool.begin().await.unwrap();
             u.username = body.username.clone();
             u.user_group_id = body.user_group_id;
-            u.password_hash = body.password.clone().unwrap();
+            if let Some(password) = body.password.clone() {
+                u.password_hash = password;
+            }
 
             match update_user(transaction, &u).await {
                 Ok(result) => Ok(HttpResponse::Ok().json(UserResponse::from(result))),
