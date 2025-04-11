@@ -1,5 +1,5 @@
 use crate::dto::pagination::Pagination;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, UserGroupFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::models::user_group::UserGroup;
 use anyhow::Context;
@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 pub async fn get_all_groups(
     mut transaction: Transaction<'_, Postgres>,
-    dto_query: DtoQuery,
+    dto_query: DtoQuery<UserGroupFilterQuery>,
 ) -> Result<DtoResponse<Vec<UserGroup>>, anyhow::Error> {
     let offset = dto_query.offset() as i64;
     let limit = dto_query.size() as i64;

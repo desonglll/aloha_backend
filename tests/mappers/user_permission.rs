@@ -9,7 +9,6 @@ use aloha_backend::mappers::user_permission::{
 use aloha_backend::models::permission::Permission;
 use aloha_backend::models::user::User;
 use aloha_backend::models::user_permission::UserPermission;
-use uuid;
 
 #[tokio::test]
 async fn insert_user_permission_works() {

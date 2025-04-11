@@ -95,7 +95,7 @@ async fn update_permission_returns_a_200_for_valid_form_data() {
     };
 
     let json_value = serde_json::to_value(&update_permission).unwrap();
-    let response = app.put_permission(update.id, &json_value).await.unwrap();
+    let response = app.put_permission(&json_value).await.unwrap();
     assert_eq!(response.name, "Updated Permission");
     assert_eq!(
         response.description,

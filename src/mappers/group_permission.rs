@@ -1,5 +1,5 @@
 use crate::dto::pagination::Pagination;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, GroupPermissionFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::models::group_permission::GroupPermission;
 use anyhow::{Context, Result};
@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 pub async fn get_all_group_permissions(
     mut transaction: Transaction<'_, Postgres>,
-    dto_query: DtoQuery,
+    dto_query: DtoQuery<GroupPermissionFilterQuery>,
 ) -> Result<DtoResponse<Vec<GroupPermission>>, anyhow::Error> {
     let offset = dto_query.offset() as i64;
     let limit = dto_query.size() as i64;
