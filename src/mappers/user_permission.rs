@@ -1,6 +1,6 @@
-use crate::dto::pagination::Pagination;
 use crate::dto::query::DtoQuery;
 use crate::dto::response::DtoResponse;
+use crate::dto::{pagination::Pagination, query::UserPermissionFilterQuery};
 use crate::models::user_permission::UserPermission;
 use anyhow::{Context, Result};
 use sqlx::{Postgres, Transaction};
@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 pub async fn get_all_user_permissions(
     mut transaction: Transaction<'_, Postgres>,
-    dto_query: DtoQuery,
+    dto_query: DtoQuery<UserPermissionFilterQuery>,
 ) -> Result<DtoResponse<Vec<UserPermission>>, anyhow::Error> {
     let offset = dto_query.offset() as i64;
     let limit = dto_query.size() as i64;

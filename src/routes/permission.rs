@@ -1,5 +1,5 @@
 use crate::configuration::get_configuration;
-use crate::dto::query::DtoQuery;
+use crate::dto::query::{DtoQuery, PermissionFilterQuery};
 use crate::dto::response::DtoResponse;
 use crate::error::AlohaError;
 use crate::mappers::permission::{
@@ -54,7 +54,7 @@ pub async fn insert_permission_route(
     )
 )]
 pub async fn get_all_permissions_route(
-    query: web::Query<DtoQuery>,
+    query: web::Query<DtoQuery<PermissionFilterQuery>>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
@@ -167,7 +167,7 @@ pub fn permission_routes(cfg: &mut web::ServiceConfig) {
         web::scope(format!("/{}", config.routes.permissions).as_str())
             .route("", web::post().to(insert_permission_route))
             .route("/{id}", web::get().to(get_permission_by_id_route))
-            .route("/{id}", web::put().to(update_permission_by_id_route))
+            .route("", web::put().to(update_permission_by_id_route))
             .route("", web::get().to(get_all_permissions_route))
             .route("/{id}", web::delete().to(delete_permission_by_id_route)),
     );
