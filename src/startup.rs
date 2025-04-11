@@ -18,7 +18,6 @@ use secrecy::{ExposeSecret, SecretString};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
-use tracing::info;
 use tracing_actix_web::TracingLogger;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -35,6 +34,7 @@ pub struct Application {
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
+        tracing::log::info!("Successfully connect to DB");
 
         let address = format!(
             "{}:{}",
@@ -42,19 +42,25 @@ impl Application {
         );
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr()?.port();
-        let server = run(
+        match run(
             listener,
             connection_pool,
             configuration.application.base_url,
             configuration.application.hmac_secret,
             configuration.redis_uri,
         )
-        .await?;
-        Ok(Self {
-            port,
-            server,
-            endpoint: configuration.application.endpoint,
-        })
+        .await
+        {
+            Ok(server) => Ok(Self {
+                port,
+                server,
+                endpoint: configuration.application.endpoint,
+            }),
+            Err(e) => {
+                tracing::log::error!("Failed to start server: {}", e);
+                Err(e)
+            }
+        }
     }
 
     pub fn port(&self) -> u16 {
@@ -71,15 +77,15 @@ impl Application {
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         let port = self.port;
-        info!("Server starting on port {}", port);
+        tracing::log::info!("Server starting on port {}", port);
         let result = self.server.await;
-        info!("Server on port {} has stopped", port);
+        tracing::log::info!("Server on port {} has stopped", port);
         result
     }
 }
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
-    println!("Connecting to DB with: {:?}", configuration.with_db());
+    tracing::log::info!("Connecting to DB with: {:?}", configuration.with_db());
     PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.with_db())
@@ -98,7 +104,7 @@ pub async fn run(
     let message_store = CookieMessageStore::builder(secret_key.clone()).build();
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let message_framework = FlashMessagesFramework::builder(message_store).build();
-    let server = HttpServer::new(move || {
+    match HttpServer::new(move || {
         App::new()
             .wrap(message_framework.clone())
             .wrap(SessionMiddleware::new(
@@ -122,7 +128,12 @@ pub async fn run(
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))
     })
-    .listen(listener)?
-    .run();
-    Ok(server)
+    .listen(listener)
+    {
+        Ok(server) => Ok(server.run()),
+        Err(e) => {
+            tracing::log::error!("Failed to start server: {}", e);
+            Err(anyhow::anyhow!("Failed to start server: {}", e))
+        }
+    }
 }
