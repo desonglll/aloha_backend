@@ -50,3 +50,9 @@ pub struct GroupPermissionFilterQuery {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PermissionFilterQuery {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TweetFilterQuery {
+    #[serde(rename = "user_id")]
+    pub user_id: Option<Uuid>,
+}

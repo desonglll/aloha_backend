@@ -33,6 +33,14 @@ use utoipa::OpenApi;
         crate::routes::user_group::get_user_group_route,
         crate::routes::user_group::update_user_group_route,
         crate::routes::user_group::delete_user_group_route,
+        
+        // Tweet routes
+        crate::routes::tweet::insert_tweet_route,
+        crate::routes::tweet::get_all_tweets_route,
+        crate::routes::tweet::get_tweet_route,
+        crate::routes::tweet::update_tweet_route,
+        crate::routes::tweet::delete_tweet_route,
+        crate::routes::tweet::delete_tweets_route,
 
         // Health Check route
         crate::routes::health_check::health_check,
@@ -60,6 +68,11 @@ use utoipa::OpenApi;
             crate::routes::user_group::CreateUserGroupFormData,
             crate::routes::user_group::PutUserGroupFormData,
             crate::dto::response::DtoResponse<crate::models::user_group::UserGroup>,
+            // Tweet schemas
+            crate::models::tweet::TweetResponse,
+            crate::routes::tweet::CreateTweetFormData,
+            crate::routes::tweet::PutTweetFormData,
+            crate::dto::response::DtoResponse<crate::models::tweet::TweetResponse>,
             // Common schemas
             crate::dto::pagination::Pagination,
             crate::error::AlohaError,
@@ -70,6 +83,7 @@ use utoipa::OpenApi;
         (name = "permissions", description = "Permission Management API"),
         (name = "users", description = "User Management API"),
         (name = "user-groups", description = "User Group Management API"),
+        (name = "tweets", description = "Tweet Management API"),
         (name = "health", description = "Health Check API")
     )
 )]
