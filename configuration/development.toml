@@ -1,3 +1,5 @@
+log_level = "debug"
+
 [database]
 require_ssl = false
 
@@ -5,5 +7,3 @@ require_ssl = false
 base_url = "http://127.0.0.1"
 port = 8080
 endpoint = "api"
-
-log_level = "trace"
