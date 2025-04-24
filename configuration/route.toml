@@ -2,5 +2,6 @@
 user_groups = "user_groups"
 users = "users"
 permissions = "permissions"
+tweets= "tweets"
 group_permissions = "group_permissions"
 user_permissions = "user_permissions"

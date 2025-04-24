@@ -63,7 +63,7 @@ create index idx_user_permissions_permission_id on user_permissions(permission_i
 
 create table tweet
 (
-    id         serial primary key,
+    id         uuid primary key default gen_random_uuid(),
     content    text not null,
     created_at timestamptz default now(),
     updated_at timestamptz default now(),
