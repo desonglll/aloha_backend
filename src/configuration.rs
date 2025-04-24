@@ -11,6 +11,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub routes: Routes,
     pub redis_uri: SecretString,
+    pub log_level: String,
 }
 #[derive(Deserialize, Debug, Clone)]
 pub struct DatabaseSettings {
@@ -32,7 +33,7 @@ pub struct ApplicationSettings {
     pub endpoint: String,
 }
 pub enum Environment {
-    Local,
+    Development,
     Production,
 }
 impl DatabaseSettings {
@@ -59,7 +60,7 @@ impl DatabaseSettings {
 impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Environment::Local => "local",
+            Environment::Development => "development",
             Environment::Production => "production",
         }
     }
@@ -68,10 +69,10 @@ impl TryFrom<String> for Environment {
     type Error = String;
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.to_lowercase().as_str() {
-            "local" => Ok(Self::Local),
+            "development" => Ok(Self::Development),
             "production" => Ok(Self::Production),
             other => Err(format!(
-                "{} is not a support environment. Use either `local` or `production`",
+                "{} is not a support environment. Use either `development` or `production`",
                 other
             )),
         }
@@ -82,7 +83,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let configuration_directory = base_path.join("configuration");
 
     let environment: Environment = std::env::var("ALOHA_ENVIRONMENT")
-        .unwrap_or_else(|_| "local".into())
+        .unwrap_or_else(|_| "development".into())
         .try_into()
         .expect("Failed to parse ALOHA_ENVIRONMENT");
     let environment_filename = format!("{}.toml", environment.as_str());

@@ -13,6 +13,8 @@ sqlx migrate revert
 
 ```dotenv
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/aloha
+RUST_LOG=debug
+ALOHA_ENVIRONMENT=development # production
 ```
 
 ## TODO

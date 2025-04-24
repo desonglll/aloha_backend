@@ -1,0 +1,9 @@
+log_level = "info"
+
+[database]
+require_ssl = true
+
+[application]
+base_url = "http://127.0.0.1"
+port = 8081
+endpoint = "api"
