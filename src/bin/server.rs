@@ -17,7 +17,11 @@ async fn main() -> anyhow::Result<()> {
         _ => LevelFilter::INFO,
     };
 
-    let fmt_layer = tracing_subscriber::fmt::layer().with_filter(level_filter);
+    // TODO: Fix the sequence of multiple directives
+    let default_log_level =
+        tracing_subscriber::EnvFilter::from_default_env().add_directive(level_filter.into());
+
+    let fmt_layer = tracing_subscriber::fmt::layer().with_filter(default_log_level);
     tracing_subscriber::registry().with(fmt_layer).init();
 
     let application = Application::build(configuration).await?;
