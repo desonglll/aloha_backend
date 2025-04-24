@@ -42,9 +42,11 @@ tracing-subscriber = { version = "0.3.19", features = [
     "fmt",
     "std",
     "env-filter",
+    "registry",
 ] }
 actix-cors = "0.7.1"
 time = { version = "0.3.41", features = ["serde"] }
 utoipa = { version = "5.3.1", features = ["actix_extras", "uuid"] }
 utoipa-swagger-ui = { version = "9", features = ["actix-web"] }
 serde_qs = { version = "0.14.0", features = ["actix4"] }
+dotenv = "0.15.0"
