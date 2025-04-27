@@ -36,6 +36,7 @@ pub async fn insert_tweet_route(
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
     let tweet = Tweet::new(body.content.clone(), body.user_id);
+    tracing::log::info!("CREATE TWEET: {:?}", tweet);
     match insert_tweet(transaction, &tweet).await {
         Ok(result) => Ok(HttpResponse::Ok().json(TweetResponse::from(result))),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
