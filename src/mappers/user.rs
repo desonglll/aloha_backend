@@ -234,3 +234,19 @@ pub async fn delete_users_by_ids(
 
     Ok(users)
 }
+
+pub async fn check_user_is_valid(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+) -> Result<bool, anyhow::Error> {
+    let record = sqlx::query!(
+        r#"
+        SELECT EXISTS(SELECT 1 FROM users WHERE id = $1) AS "exists!"
+        "#,
+        user_id
+    )
+    .fetch_one(&mut **transaction)
+    .await?;
+
+    Ok(record.exists)
+}

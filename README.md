@@ -1,5 +1,5 @@
 ```shell
-docker run --name aloha -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+docker run --name aloha -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -p 5432:5432 -d postgres
 
 docker run --name aloha-redis -p 6379:6379 -d redis
 
@@ -14,7 +14,7 @@ sqlx migrate revert
 ```dotenv
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/aloha
 RUST_LOG=debug
-ALOHA_ENVIRONMENT=development # production
+ALOHA_ENVIRONMENT=development# production
 ```
 
 ## TODO

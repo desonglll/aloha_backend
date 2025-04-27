@@ -199,3 +199,36 @@ async fn test_delete_users_by_ids() {
         .expect("Failed to get remaining user");
     assert_eq!(remaining_user.unwrap().username, "bulk_user3");
 }
+
+#[tokio::test]
+async fn test_check_user_is_valid() {
+    let pool = match setup_test_db().await {
+        Ok(pool) => pool,
+        Err(e) => {
+            eprintln!("Skipping test, database connection failed: {}", e);
+            return;
+        }
+    };
+    // Test insert
+    let user = User {
+        id: Uuid::new_v4(),
+        username: "test_user".to_string(),
+        password_hash: "hashed_password".to_string(),
+        created_at: None,
+        user_group_id: None,
+    };
+    let transaction = pool.begin().await.expect("Failed to begin transaction");
+    let inserted_user = insert_user(transaction, &user)
+        .await
+        .expect("Failed to insert user");
+
+    assert_eq!(inserted_user.username, user.username);
+    assert_eq!(inserted_user.password_hash, user.password_hash);
+    assert_eq!(inserted_user.id, user.id);
+
+    let mut transaction = pool.begin().await.expect("Failed to begin transaction");
+    let result = check_user_is_valid(&mut transaction, user.id)
+        .await
+        .unwrap();
+    assert!(result)
+}
