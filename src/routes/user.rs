@@ -121,7 +121,6 @@ pub async fn update_user_route(
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
     let transaction = pool.begin().await.unwrap();
-    dbg!(&body);
 
     let find_user = match get_user_by_id(transaction, body.0.id).await {
         Ok(user) => user,

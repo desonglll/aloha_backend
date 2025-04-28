@@ -121,7 +121,8 @@ pub async fn run(
                 Cors::default()
                     .allow_any_origin()
                     .allow_any_header()
-                    .allow_any_method(),
+                    .allow_any_method()
+                    .supports_credentials(),
             )
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")

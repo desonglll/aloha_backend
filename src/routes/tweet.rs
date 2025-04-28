@@ -7,6 +7,7 @@ use crate::mappers::tweet::{
     update_tweet,
 };
 use crate::models::tweet::{Tweet, TweetResponse};
+use crate::routes::auth::check_login;
 use actix_web::web::{Data, Json};
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
@@ -18,7 +19,6 @@ use uuid::Uuid;
 #[derive(Deserialize, Clone, ToSchema)]
 pub struct CreateTweetFormData {
     content: String,
-    user_id: Uuid,
 }
 
 #[utoipa::path(
@@ -31,14 +31,30 @@ pub struct CreateTweetFormData {
     )
 )]
 pub async fn insert_tweet_route(
+    session: actix_session::Session,
     body: Json<CreateTweetFormData>,
     pool: Data<PgPool>,
 ) -> Result<HttpResponse, AlohaError> {
-    let transaction = pool.begin().await.unwrap();
-    let tweet = Tweet::new(body.content.clone(), body.user_id);
-    tracing::log::info!("CREATE TWEET: {:?}", tweet);
-    match insert_tweet(transaction, &tweet).await {
-        Ok(result) => Ok(HttpResponse::Ok().json(TweetResponse::from(result))),
+    let is_login = check_login(&session).await;
+    tracing::log::debug!("{:?}", session.entries());
+
+    let user_id = session.get::<Uuid>("user_id");
+    tracing::log::debug!("user_id: {:?}", user_id);
+    match user_id {
+        Ok(Some(user_id)) => match is_login {
+            Ok(true) => {
+                let transaction = pool.begin().await.unwrap();
+                let tweet = Tweet::new(body.content.clone(), user_id);
+                tracing::log::info!("CREATE TWEET: {:?}", tweet);
+                match insert_tweet(transaction, &tweet).await {
+                    Ok(result) => Ok(HttpResponse::Ok().json(TweetResponse::from(result))),
+                    Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+                }
+            }
+            Ok(false) => Err(AlohaError::UserUnauthentication),
+            Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
+        },
+        Ok(None) => Err(AlohaError::UserUnauthentication),
         Err(e) => Err(AlohaError::DatabaseError(e.to_string())),
     }
 }
