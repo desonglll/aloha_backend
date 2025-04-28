@@ -18,10 +18,8 @@ pub async fn get_all_users(
         .count;
 
     let mut group_id = None;
-    println!("dto_query: {:?}", dto_query);
     if let Some(filter) = dto_query.filter.clone() {
         group_id = filter.user_group_id;
-        println!("group_id: {:?}", group_id);
     }
 
     let rows = sqlx::query!(
@@ -67,7 +65,7 @@ pub async fn get_user_by_id(
         User,
         r#"
         SELECT id, username, password_hash, created_at, user_group_id 
-        FROM users 
+        FROM users
         WHERE id = $1
         "#,
         id
@@ -79,18 +77,18 @@ pub async fn get_user_by_id(
 }
 
 pub async fn get_user_by_username(
-    mut transaction: Transaction<'_, Postgres>,
-    username: &str,
+    transaction: &mut Transaction<'_, Postgres>,
+    username: &String,
 ) -> Result<User, anyhow::Error> {
     let row = sqlx::query!(
         r#"
         SELECT id, username, password_hash, created_at, user_group_id 
-        FROM users 
+        FROM users
         WHERE username = $1
         "#,
         username
     )
-    .fetch_one(&mut *transaction)
+    .fetch_one(&mut **transaction)
     .await
     .context("Failed to fetch user by username")?;
 
@@ -235,7 +233,7 @@ pub async fn delete_users_by_ids(
     Ok(users)
 }
 
-pub async fn check_user_is_valid(
+pub async fn check_user_id_is_valid(
     transaction: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
 ) -> Result<bool, anyhow::Error> {
@@ -244,6 +242,24 @@ pub async fn check_user_is_valid(
         SELECT EXISTS(SELECT 1 FROM users WHERE id = $1) AS "exists!"
         "#,
         user_id
+    )
+    .fetch_one(&mut **transaction)
+    .await?;
+
+    Ok(record.exists)
+}
+
+pub async fn check_user_password_correct(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    password_hash: String,
+) -> Result<bool, anyhow::Error> {
+    let record = sqlx::query!(
+        r#"
+        SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND password_hash = $2) AS "exists!"
+        "#,
+        user_id,
+        password_hash
     )
     .fetch_one(&mut **transaction)
     .await?;
