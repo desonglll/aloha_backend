@@ -43,3 +43,6 @@ ALOHA_ENVIRONMENT=development# production
 - [x] fix for group_permission
 - [x] fix for user
 - [ ] fix for tweet
+
+
+- [ ] change user password String to hashed password_hash in production mode.

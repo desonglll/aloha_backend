@@ -62,8 +62,8 @@ async fn test_user_crud_operations() {
     assert_eq!(fetched_user.clone().unwrap().username, user.username);
 
     // Test get by username
-    let transaction = pool.begin().await.expect("Failed to begin transaction");
-    let fetched_by_username = get_user_by_username(transaction, &user.username)
+    let mut transaction = pool.begin().await.expect("Failed to begin transaction");
+    let fetched_by_username = get_user_by_username(&mut transaction, &user.username)
         .await
         .expect("Failed to get user by username");
     assert_eq!(fetched_by_username.id, user.id);
@@ -227,7 +227,7 @@ async fn test_check_user_is_valid() {
     assert_eq!(inserted_user.id, user.id);
 
     let mut transaction = pool.begin().await.expect("Failed to begin transaction");
-    let result = check_user_is_valid(&mut transaction, user.id)
+    let result = check_user_id_is_valid(&mut transaction, user.id)
         .await
         .unwrap();
     assert!(result)
