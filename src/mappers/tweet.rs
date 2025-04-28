@@ -7,7 +7,7 @@ use anyhow::Context;
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
-use super::user::check_user_is_valid;
+use super::user::check_user_id_is_valid;
 
 pub async fn get_all_tweets(
     mut transaction: Transaction<'_, Postgres>,
@@ -83,7 +83,7 @@ pub async fn insert_tweet(
     tweet: &Tweet,
 ) -> Result<Tweet, anyhow::Error> {
     let user_id = tweet.user_id;
-    let is_user_valid = check_user_is_valid(&mut transaction, user_id).await?;
+    let is_user_valid = check_user_id_is_valid(&mut transaction, user_id).await?;
     if !is_user_valid {
         return Err(AlohaError::UserIdInvalid.into());
     }
