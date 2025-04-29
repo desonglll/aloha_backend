@@ -16,6 +16,7 @@ use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use std::collections::HashMap;
 use std::net::TcpStream;
 use tracing::info;
 use uuid::Uuid;
@@ -530,6 +531,20 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
             .json::<TweetResponse>()
+            .await
+    }
+    pub async fn login(
+        &self,
+        body: &serde_json::Value,
+    ) -> reqwest::Result<HashMap<String, String>> {
+        self.api_client
+            .post(format!("{}/auth/login", self.address))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .json::<HashMap<String, String>>()
             .await
     }
 }
