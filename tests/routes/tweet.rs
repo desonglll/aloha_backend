@@ -4,21 +4,36 @@ use aloha_backend::mappers::tweet::{get_all_tweets, insert_tweet};
 use aloha_backend::mappers::user::insert_user;
 use aloha_backend::models::tweet::Tweet;
 use aloha_backend::models::user::User;
+use aloha_backend::routes::auth::LoginFormData;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn insert_tweet_returns_a_200_for_valid_form_data() {
     let app = spawn_app().await;
-
-    // First create a user
+    // Create a test user
     let transaction = app.db_pool.begin().await.unwrap();
     let user = User::default_test();
-    let user_result = insert_user(transaction, &user).await.unwrap();
+    let inserted_user = insert_user(transaction, &user).await.unwrap();
+
+    // First login to create a session
+    let login_data = LoginFormData {
+        username: inserted_user.username.clone(),
+        password: inserted_user.password_hash.clone(),
+    };
+
+    let login_response = app
+        .api_client
+        .post(format!("{}/auth/login", app.address))
+        .json(&login_data)
+        .send()
+        .await
+        .expect("Failed to execute login request");
+
+    assert!(login_response.status().is_success());
 
     let body = serde_json::json!({
-        "content": "Test tweet content",
-        "user_id": user_result.id
+        "content": "Test tweet content"
     });
 
     let mock_server = MockServer::start().await;
@@ -31,7 +46,7 @@ async fn insert_tweet_returns_a_200_for_valid_form_data() {
     let response = app.post_tweet(&body).await.unwrap();
 
     assert_eq!(response.content, "Test tweet content");
-    assert_eq!(response.user_id, user_result.id);
+    assert_eq!(response.user_id, inserted_user.id);
 }
 
 #[tokio::test]

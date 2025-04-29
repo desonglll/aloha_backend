@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod group_permission;
 pub mod health_check;
 pub mod permission;
