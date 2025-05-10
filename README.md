@@ -3,6 +3,12 @@ docker run --name aloha -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres 
 
 docker run --name aloha-redis -p 6379:6379 -d redis
 
+sudo apt install build-essential libssl-dev -y
+
+cp .env.example .env
+
+cargo install --locked sqlx-cli
+
 sqlx database create
 
 sqlx migrate run
