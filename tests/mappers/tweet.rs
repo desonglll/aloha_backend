@@ -208,7 +208,7 @@ async fn get_all_tweets_no_filter() {
     // Insert tweets directly
     for tweet in &test_tweets {
         sqlx::query!(
-            r#"INSERT INTO tweet (id, content, user_id) VALUES ($1, $2, $3)"#,
+            r#"INSERT INTO tweets (id, content, user_id) VALUES ($1, $2, $3)"#,
             tweet.id,
             tweet.content,
             tweet.user_id,
@@ -220,7 +220,7 @@ async fn get_all_tweets_no_filter() {
 
     // Now verify the tweets are in the database by direct query
     let tweets_in_db = sqlx::query!(
-        r#"SELECT id, content, user_id FROM tweet WHERE user_id = $1"#,
+        r#"SELECT id, content, user_id FROM tweets WHERE user_id = $1"#,
         test_user.id
     )
     .fetch_all(&pool)
@@ -341,7 +341,7 @@ async fn delete_tweets_by_ids_success() {
         let tweet = Tweet::default_test(user_result.id);
         let result = sqlx::query!(
             r#"
-            INSERT INTO tweet (id, content, user_id)
+            INSERT INTO tweets (id, content, user_id)
             VALUES ($1, $2, $3)
             RETURNING id, content, created_at, updated_at, user_id
             "#,
@@ -361,7 +361,7 @@ async fn delete_tweets_by_ids_success() {
         let tweet = sqlx::query!(
             r#"
             SELECT id, content, created_at, updated_at, user_id 
-            FROM tweet 
+            FROM tweets 
             WHERE id = $1
             "#,
             tweet_id
@@ -383,7 +383,7 @@ async fn delete_tweets_by_ids_success() {
     let all_tweets = sqlx::query!(
         r#"
         SELECT id, content, created_at, updated_at, user_id 
-        FROM tweet 
+        FROM tweets 
         ORDER BY created_at DESC
         "#
     )
@@ -434,7 +434,7 @@ async fn delete_tweets_by_ids_success() {
     let ids_to_delete = vec![tweet_ids[0], tweet_ids[1]];
     let deleted_tweets = sqlx::query!(
         r#"
-        DELETE FROM tweet
+        DELETE FROM tweets
         WHERE id = ANY($1)
         RETURNING id, content, created_at, updated_at, user_id
         "#,
@@ -474,7 +474,7 @@ async fn delete_tweets_by_ids_success() {
     let remaining_tweets = sqlx::query!(
         r#"
         SELECT id, content, created_at, updated_at, user_id 
-        FROM tweet 
+        FROM tweets 
         ORDER BY created_at DESC
         "#
     )

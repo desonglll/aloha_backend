@@ -47,6 +47,11 @@ create table "users"
 create index idx_users_username on users(username);
 create index idx_users_user_group_id on users(user_group_id);
 
+INSERT INTO users (
+    username,
+    password_hash
+) VALUES ( 'mike', '070011');
+
 create table user_permissions
 (
     user_id       uuid not null,
@@ -61,7 +66,7 @@ create table user_permissions
 create index idx_user_permissions_user_id on user_permissions(user_id);
 create index idx_user_permissions_permission_id on user_permissions(permission_id);
 
-create table tweet
+create table tweets
 (
     id         uuid primary key default gen_random_uuid(),
     content    text not null,
@@ -72,8 +77,8 @@ create table tweet
 );
 
 -- Add indexes for foreign keys and frequently queried fields
-create index idx_tweet_user_id on tweet(user_id);
-create index idx_tweet_created_at on tweet(created_at);
+create index idx_tweet_user_id on tweets(user_id);
+create index idx_tweet_created_at on tweets(created_at);
 
 -- Add trigger to automatically update the updated_at column
 create or replace function update_updated_at_column()
@@ -85,7 +90,7 @@ end;
 $$ language plpgsql;
 
 create trigger update_tweet_updated_at
-before update on tweet
+before update on tweets
 for each row
 execute function update_updated_at_column();
 

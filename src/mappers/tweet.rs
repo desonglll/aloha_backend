@@ -15,7 +15,7 @@ pub async fn get_all_tweets(
 ) -> Result<DtoResponse<Vec<Tweet>>, anyhow::Error> {
     let offset = dto_query.offset() as i64;
     let limit = dto_query.size() as i64;
-    let total = sqlx::query!("SELECT COUNT(*) FROM tweet")
+    let total = sqlx::query!("SELECT COUNT(*) FROM tweets")
         .fetch_one(&mut *transaction)
         .await?
         .count;
@@ -25,7 +25,7 @@ pub async fn get_all_tweets(
     let rows = sqlx::query!(
         r#"
         SELECT id, content, created_at, updated_at, user_id 
-        FROM tweet 
+        FROM tweets 
         WHERE ($1::uuid IS NULL OR user_id = $1)
         ORDER BY created_at DESC 
         LIMIT $2 OFFSET $3
@@ -60,7 +60,7 @@ pub async fn get_tweet_by_id(
     let row = sqlx::query!(
         r#"
         SELECT id, content, created_at, updated_at, user_id 
-        FROM tweet 
+        FROM tweets
         WHERE id = $1
         "#,
         id
@@ -90,7 +90,7 @@ pub async fn insert_tweet(
 
     let row = sqlx::query!(
         r#"
-        INSERT INTO tweet (id, content, user_id)
+        INSERT INTO tweets (id, content, user_id)
         VALUES ($1, $2, $3)
         RETURNING id, content, created_at, updated_at, user_id
         "#,
@@ -122,7 +122,7 @@ pub async fn delete_tweet_by_id(
 ) -> Result<Tweet, anyhow::Error> {
     let row = sqlx::query!(
         r#"
-        DELETE FROM tweet
+        DELETE FROM tweets
         WHERE id = $1
         RETURNING id, content, created_at, updated_at, user_id
         "#,
@@ -152,7 +152,7 @@ pub async fn update_tweet(
 ) -> Result<Tweet, anyhow::Error> {
     let row = sqlx::query!(
         r#"
-        UPDATE tweet
+        UPDATE tweets
         SET content = $1
         WHERE id = $2
         RETURNING id, content, created_at, updated_at, user_id
@@ -184,7 +184,7 @@ pub async fn delete_tweets_by_ids(
 ) -> Result<Vec<Tweet>, anyhow::Error> {
     let rows = sqlx::query!(
         r#"
-        DELETE FROM tweet
+        DELETE FROM tweets
         WHERE id = ANY($1)
         RETURNING id, content, created_at, updated_at, user_id
         "#,
