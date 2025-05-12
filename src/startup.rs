@@ -19,7 +19,6 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
-use utoipa_swagger_ui::SwaggerUi;
 
 pub struct ApplicationBaseUrl(pub String);
 #[derive(Clone)]
@@ -124,10 +123,10 @@ pub async fn run(
                     .allow_any_method()
                     .supports_credentials(),
             )
-            .service(
-                SwaggerUi::new("/swagger-ui/{_:.*}")
-                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
-            )
+            // .service(
+            //     SwaggerUi::new("/swagger-ui/{_:.*}")
+            //         .url("/api-docs/openapi.json", ApiDoc::openapi()),
+            // )
             .route("/api/health_check", web::get().to(health_check))
             .configure(api_routes)
             .app_data(db_pool.clone())
